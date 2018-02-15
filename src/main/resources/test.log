@@ -1,0 +1,50 @@
+Exporter version: 5.5.0, Blender version: 2.78 (sub 0)
+========= Conversion from Blender to Babylon.js =========
+	Scene settings used:
+		selected layers only:  false
+		flat shading entire scene:  false
+		inline textures:  false
+		texture directory:  /home/epi/prog/babylon/testFPS/src/main/resources/
+	Python World class constructor completed
+	processing begun of mesh:  g1
+		processing begun of Standard material:  Trank_bark
+			Diffuse texture found "Kd"
+				Image texture found, type:  diffuseTexture, mapped using: "UVMap"
+		num positions      :  9283
+		num normals        :  9283
+		num uvs            :  18566
+		num uvs2           :  0
+		num colors         :  0
+		num indices        :  36444
+	processing begun of mesh:  g2
+		processing begun of Standard material:  DB2X2_L01
+			Diffuse texture found "Kd.001"
+				Image texture found, type:  diffuseTexture, mapped using: "UVMap"
+		num positions      :  18790
+		num normals        :  18790
+		num uvs            :  37580
+		num uvs2           :  0
+		num colors         :  0
+		num indices        :  56370
+	processing begun of mesh:  Plane
+		WARNING: No materials have been assigned: 
+		num positions      :  4
+		num normals        :  4
+		num uvs            :  0
+		num uvs2           :  0
+		num colors         :  0
+		num indices        :  6
+	processing begun of mesh:  Cube
+		processing begun of Standard material:  Material
+		num positions      :  8
+		num normals        :  8
+		num uvs            :  0
+		num uvs2           :  0
+		num colors         :  0
+		num indices        :  36
+	processing begun of camera (UniversalCamera):  Camera
+	processing begun of light (POINT):  Lamp
+========= Writing of scene file started =========
+========= Writing of scene file completed =========
+========= end of processing =========
+elapsed time:  0 min, 3.8376 secs

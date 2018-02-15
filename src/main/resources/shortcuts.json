@@ -1,0 +1,18 @@
+[
+  {
+    "combo": "z",
+    "action": "moveForward"
+  },
+  {
+    "combo": "s",
+    "action": "moveBackward"
+  },
+  {
+    "combo": "q",
+    "action": "strafeLeft"
+  },
+  {
+    "combo": "d",
+    "action": "strafeRight"
+  }
+]
