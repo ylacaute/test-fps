@@ -6,7 +6,6 @@ Exporter version: 5.5.0, Blender version: 2.78 (sub 0)
 		inline textures:  false
 		texture directory:  /home/epi/prog/babylon/testFPS/src/main/resources/mesh/
 	Python World class constructor completed
-	WARNING: No active camera has been assigned, or is not in a currently selected Blender layer
 	processing begun of mesh:  Cube
 		processing begun of Standard material:  Material
 		num positions      :  8
@@ -15,7 +14,9 @@ Exporter version: 5.5.0, Blender version: 2.78 (sub 0)
 		num uvs2           :  0
 		num colors         :  0
 		num indices        :  36
+	processing begun of camera (UniversalCamera):  Camera
+	processing begun of light (POINT):  Lamp
 ========= Writing of scene file started =========
 ========= Writing of scene file completed =========
 ========= end of processing =========
-elapsed time:  0 min, 0.0085 secs
+elapsed time:  0 min, 0.0031 secs

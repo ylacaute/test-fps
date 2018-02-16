@@ -1,0 +1,13 @@
+
+PHYSICS
+
+http://www.babylon.actifgames.com/moveCharacter/
+
+http://urbanproductions.com/wingy/babylon/thruster/t26/flyer26.htm
+
+https://www.babylonjs-playground.com/#BEFOO
+http://www.babylonjs-playground.com/#1RKZXB#6
+
+
+Simple colored box
+https://www.babylonjs-playground.com/#1ST43U#52

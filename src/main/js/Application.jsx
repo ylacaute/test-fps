@@ -15,22 +15,20 @@ class Application extends React.Component {
 
   constructor(props) {
     super(props);
-    console.log("WTF");
+    console.log("Initializing application...");
   };
 
   componentDidMount() {
     // optional debug param
-    console.log("shortcutJS : ", shortcutJS);
-    console.log("shortcuts : ", shortcuts);
     shortcutJS.loadFromJson(shortcuts);
     // shortcutJS.subscribe('moveForward', ev => console.log('moveForward'));
 
+    let canvas = document.getElementById("renderCanvas");
+    let g = new Game(canvas);
 
-    let g = new Game("renderCanvas");
     var spector = new SPECTOR.Spector();
     spector.displayUI();
 
-    console.log("WTF");
   }
 
   render() {

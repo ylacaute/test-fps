@@ -3,7 +3,7 @@
 "materials":[{"name":"player.Material","id":"player.Material","ambient":[0.8,0.8,0.8],"diffuse":[0.64,0.64,0.64],"specular":[0.5,0.5,0.5],"emissive":[0,0,0],"specularPower":50,"alpha":1,"backFaceCulling":true,"checkReadyOnlyOnce":false,"maxSimultaneousLights":4}],
 "multiMaterials":[],
 "skeletons":[],
-"meshes":[{"name":"Cube","id":"Cube","materialId":"player.Material","billboardMode":0,"position":[0,1.0512,0],"rotation":[0,0,0],"scaling":[1,1,1],"isVisible":true,"freezeWorldMatrix":false,"isEnabled":true,"checkCollisions":false,"receiveShadows":false,"tags":""
+"meshes":[{"name":"Cube","id":"Cube","materialId":"player.Material","billboardMode":0,"position":[-0.0054,2.1663,0.1976],"rotation":[0,0,0],"scaling":[1.0202,1.9477,0.6183],"isVisible":true,"freezeWorldMatrix":false,"isEnabled":true,"checkCollisions":false,"receiveShadows":false,"tags":""
 ,"positions":[1,-1,-1,-1,-1,1,1,-1,1,-1,1,1,1,1,-1,1,1,1,-1,-1,-1,-1,1,-1]
 ,"normals":[0.5773,-0.5773,-0.5773,-0.5773,-0.5773,0.5773,0.5773,-0.5773,0.5773,-0.5773,0.5773,0.5773,0.5773,0.5773,-0.5773,0.5773,0.5773,0.5773,-0.5773,-0.5773,-0.5773,-0.5773,0.5773,-0.5773]
 ,"indices":[0,1,2,3,4,5,5,0,2,4,6,0,6,3,1,2,3,5,0,6,1,3,7,4,5,4,0,4,7,6,6,7,3,2,1,3]
@@ -11,7 +11,7 @@
 ,"instances":[]}
 ],
 "morphTargetManagers":[],
-"cameras":[],
-"lights":[],
+"cameras":[{"name":"Camera","id":"Camera","position":[7.4811,5.3437,-6.5076],"rotation":[0.4615,-0.8149,0],"fov":0.8576,"minZ":0.1,"maxZ":100,"speed":1,"inertia":0.9,"checkCollisions":false,"applyGravity":false,"ellipsoid":[0.2,0.9,0.2],"cameraRigMode":0,"interaxial_distance":0.0637,"type":"UniversalCamera"}],"activeCamera":"Camera",
+"lights":[{"name":"Lamp","id":"Lamp","type":0,"position":[4.0762,5.9039,1.0055],"intensity":1,"diffuse":[1,1,1],"specular":[1,1,1]}],
 "shadowGenerators":[]
 }
