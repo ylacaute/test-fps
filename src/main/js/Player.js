@@ -2,16 +2,17 @@ import * as BABYLON from 'babylonjs';
 
 export default class Player {
 
-  mass = 5;
+  mass = 0.01;
 
   camera = null;
-  //physicsImpostor = null;
+  physicsImpostor = null;
   moveForward = false;
   moveBackward = false;
   strafeLeft = false;
   strafeRight = false;
   jumping = false;
   running = false;
+  jump = 2.5;
 
   playAnnimation = false;
   meshPlayer = null;
@@ -29,8 +30,8 @@ export default class Player {
     this.meshOctree = loadedMeshes;
     this.meshPlayer.scaling= new BABYLON.Vector3(0.05, 0.05, 0.05);
     //this.meshPlayer.position = new BABYLON.Vector3(-5.168, 1.392, -7.463);
-    this.meshPlayer.position = new BABYLON.Vector3(0, 5, 0);
-    this.meshPlayer.rotation = new BABYLON.Vector3(0, 3.9, 0);
+    this.meshPlayer.position = new BABYLON.Vector3(0, 15, 0);
+//    this.meshPlayer.rotation = new BABYLON.Vector3(0, 3.9, 0);
     game.camera.alpha = -parseFloat(this.meshPlayer.rotation.y) + 4.69;
 
     this.skeletonsPlayer[0] = skeletons[0];
@@ -39,16 +40,63 @@ export default class Player {
     let start = 0;
     let end = 100;
 
+
+
     game.scene.beginAnimation(skeletons[0], 100 * start / totalFrame, 100 * end / totalFrame, true, this.walkingAnimeSpeed);
-    this.meshPlayer.checkCollisions = true;
-    this.meshPlayer.ellipsoid = new BABYLON.Vector3(0.5, 2, 0.5);
+
+    this.meshPlayer.ellipsoid = new BABYLON.Vector3(1, 2, 1);
     this.meshPlayer.ellipsoidOffset = new BABYLON.Vector3(0, 2, 0);
+    this.meshPlayer.checkCollisions = true;
     this.meshPlayer.applyGravity = true;
+
+    // this.physicsImpostor = new BABYLON.PhysicsImpostor(
+    //   this.meshPlayer,
+    //   BABYLON.PhysicsImpostor.BoxImpostor, {
+    //     mass: this.mass,
+    //     friction: 0, // 0 = huge sliding, max 1
+    //     restitution: 0 // 0 = no bounce, max 1
+    //   }, game.scene);
+    //
+    // // "little push" to bot
+    // this.physicsImpostor.setLinearVelocity(new BABYLON.Vector3(0,1,0));
+
+
 
     game.scene.registerBeforeRender(this.beforeRender.bind(this));
     window.addEventListener("keydown", this.onKeyDown.bind(this), false);
     window.addEventListener("keyup", this.onKeyUp.bind(this), false);
     console.log("Player initialization complete");
+  }
+
+  jump() {
+    //var cam = scene.cameras[0];
+    console.log("jump !");
+    this.jumping = true;
+
+    let animations = [];
+    let jumpAnimation = new BABYLON.Animation(
+      "playerJump",
+      "position.y",
+      20,
+      BABYLON.Animation.ANIMATIONTYPE_FLOAT,
+      BABYLON.Animation.ANIMATIONLOOPMODE_CYCLE);
+
+    // Animation keys
+    let keys = [];
+    keys.push({ frame: 0, value: this.meshPlayer.position.y });
+    keys.push({ frame: 5, value: this.meshPlayer.position.y + 30 });
+    keys.push({ frame: 20, value: this.meshPlayer.position.y });
+    jumpAnimation.setKeys(keys);
+
+    //let easingFunction = new BABYLON.SineEase();
+    //easingFunction.setEasingMode(BABYLON.EasingFunction.EASINGMODE_EASEINOUT);
+    //jumpAnimation.setEasingFunction(easingFunction);
+
+    this.meshPlayer.animations.push(jumpAnimation);
+
+    this.scene.beginAnimation(this.meshPlayer, 0, 20, false, 1, () => {
+      this.jumping = false;
+    });
   }
 
 
@@ -62,6 +110,17 @@ export default class Player {
   animateActor() {
     let speed = this.running ? this.runningSpeed : this.walkingSpeed;
     let animeSpeed = this.running ? this.runningAnimeSpeed : this.walkingAnimeSpeed;
+    let ground = this.scene.getMeshByName("ground");
+    let yPos = 0.5;
+
+    if (this.jump > 3 && this.jumping) { //&& this.meshPlayer.intersectsMesh(ground, false)
+      this.jumping = false;
+      this.jump = 2.5;
+    }
+    if (this.jumping) {
+      yPos += Math.cos(this.jump);
+      this.jump = this.jump + 0.01;
+    }
 
     if(this.playAnnimation === false && (this.moveForward || this.moveBackward)) {
       let totalFrame = this.skeletonsPlayer[0]._scene._activeSkeletons.data.length;
@@ -77,7 +136,7 @@ export default class Player {
     if (this.moveForward) {
       let forward = new BABYLON.Vector3(
         parseFloat(Math.sin(parseFloat(this.meshPlayer.rotation.y))) / speed,
-        0.5,
+        yPos,
         parseFloat(Math.cos(parseFloat(this.meshPlayer.rotation.y))) / speed);
       forward = forward.negate();
       this.meshPlayer.moveWithCollisions(forward);
@@ -85,7 +144,7 @@ export default class Player {
     else if (this.moveBackward) {
       let backwards = new BABYLON.Vector3(
         parseFloat(Math.sin(parseFloat(this.meshPlayer.rotation.y))) / speed,
-        -0.5,
+        -yPos,
         parseFloat(Math.cos(parseFloat(this.meshPlayer.rotation.y))) / speed);
       this.meshPlayer.moveWithCollisions(backwards);
     }
@@ -128,10 +187,9 @@ export default class Player {
   }
 
   onKeyDown(event) {
-    console.log("key : " + event.keyCode);
+    //console.log("key : " + event.keyCode);
     switch(event.keyCode){
       case 16: this.running = true; break;
-      case 32: this.jumping = true; break;
       case 90: this.moveForward = true; break;
       case 83: this.moveBackward = true; break;
       case 81: this.strafeLeft = true; break;
@@ -142,7 +200,13 @@ export default class Player {
   onKeyUp(event) {
     switch(event.keyCode){
       case 16: this.running = false; break;
-      case 32: this.jumping = false; break;
+      case 32:
+        if (!this.jumping) {
+          //this.jump();
+          console.log("Begin of jump");
+          this.jumping = true;
+        }
+        break;
       case 90: this.moveForward = false; break;
       case 83: this.moveBackward = false; break;
       case 81: this.strafeLeft = false; break;
@@ -269,10 +333,3 @@ export default class Player {
 
 
 //
-// this.physicsImpostor = new BABYLON.PhysicsImpostor(
-//   this.mesh,
-//   BABYLON.PhysicsImpostor.BoxImpostor, {
-//     mass: this.mass,
-//     friction: 1, // 0 = huge sliding, max 1
-//     restitution: 0 // 0 = no bounce, max 1
-//   }, game.scene);

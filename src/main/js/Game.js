@@ -2,6 +2,7 @@ import * as BABYLON from 'babylonjs';
 import * as GUI from 'babylonjs-gui';
 
 import Player from 'Player.js';
+import FirstPlayer from "FirstPlayer";
 
 export default class Game {
 
@@ -10,13 +11,29 @@ export default class Game {
   constructor(canvas) {
     this.engine = this.createEngine(canvas);
     this.scene = this.createScene(this.engine, canvas);
+
+    //new FirstPlayer(this, canvas);
+
     this.assetsManager = new BABYLON.AssetsManager(this.scene);
     this.assetsManager.onFinish = () => {
       console.log("All assets loaded");
+      this.addTests(this.scene);
       this.engine.runRenderLoop(this.render.bind(this));
     };
     console.log("Start loading assets...");
     this.importObjects(this.scene, this.assetsManager);
+  }
+
+  addTests(scene) {
+    var sphere = BABYLON.Mesh.CreateSphere("sphere1", 16, 2, scene);
+    //var ground = BABYLON.Mesh.CreateGround("ground1", 6, 6, 2, scene);
+    sphere.physicsImpostor = new BABYLON.PhysicsImpostor(sphere, BABYLON.PhysicsImpostor.SphereImpostor, {
+      mass: 1,
+      restitution: 1,
+      friction: 1
+    }, scene);
+    sphere.position.y = 10;
+    sphere.position.x = 30;
   }
 
 
@@ -34,11 +51,12 @@ export default class Game {
     console.log("Initializing scene...");
     let scene = new BABYLON.Scene(engine);
 
+    // https://doc.babylonjs.com/how_to/using_the_physics_engine
     scene.gravity = new BABYLON.Vector3(0, -0.5, 0);
     scene.collisionsEnabled = true;
     //scene.workerCollisions = false;
-
     scene.enablePhysics(); // Must be initialize before impostors
+
 
     scene.ambientColor = BABYLON.Color3.FromInts(250, 250, 250);
     scene.clearColor = BABYLON.Color4.FromInts(127, 165, 13, 0);
@@ -46,7 +64,9 @@ export default class Game {
 
     this.initLights(scene);
     //this.initFog(scene);
-    this.initCamera(scene, canvas);
+
+    //this.initFirstPersonCamera(scene, canvas);
+    this.init3rdPersonCamera(scene, canvas);
     //this.applySkybox(scene, "sky01");
     //this.createGUI();
     this.initGround(scene);
@@ -54,30 +74,44 @@ export default class Game {
     this.createInvisibleBorders(scene);
     //var gravityVector = new BABYLON.Vector3(0,-9.81, 0);
     //scene.enablePhysics(gravityVector);
+
+
+
     return scene;
   }
 
   render() {
     this.scene.render();
-    if (this.scene.isReady()) {
+    if (this.scene.isReady() && this.player) {
+
+      // Used only for third person view
       this.cameraFollowActor();
+
     }
 
   }
 
-  initCamera(scene, canvas) {
+  // initFirstPersonCamera(scene, canvas) {
+  //   let camera = new BABYLON.FreeCamera("FreeCamera", new BABYLON.Vector3(0, 3.5, 0), scene);
+  //   camera.checkCollisions = true;
+  //   camera.applyGravity = true;
+  //   camera.ellipsoid = new BABYLON.Vector3(1, 1, 1);
+  //   camera.attachControl(canvas, true);
+  //   this.camera = camera;
+  // }
+
+  init3rdPersonCamera(scene, canvas) {
     // Camera 3 eme personne
     //let camera = new BABYLON.ArcRotateCamera("CameraBaseRotate", -Math.PI / 2, Math.PI / 2.2, 12, new BABYLON.Vector3(0, 5.0, 0), scene);
     //new ArcRotateCamera(name, alpha, beta, radius, target, scene)
-    let camera = new BABYLON.ArcRotateCamera("CameraBaseRotate", -Math.PI/2, Math.PI/2.2, 12, new BABYLON.Vector3(0, 3.5, 0), scene);
+    let camera = new BABYLON.ArcRotateCamera("CameraBaseRotate", -Math.PI/2, Math.PI/2.2, 20, new BABYLON.Vector3(0, 3.5, 0), scene);
     camera.wheelPrecision = 50;
     camera.lowerRadiusLimit = 0;
-    camera.upperRadiusLimit = 30;
+    camera.upperRadiusLimit = 50;
     camera.minZ = 0;
     camera.minX = 4096;
-    this.camera = scene.activeCamera = camera;
     camera.attachControl(canvas);
-    return camera;
+    this.camera = scene.activeCamera = camera;
   }
 
   cameraFollowActor() {
@@ -90,6 +124,7 @@ export default class Game {
 
     this.player.meshPlayer.rotation.y = -4.69 - this.camera.alpha;
     this.camera.target.x = parseFloat(this.player.meshPlayer.position.x);
+    this.camera.target.y = parseFloat(this.player.meshPlayer.position.y);
     this.camera.target.z = parseFloat(this.player.meshPlayer.position.z);
 
   }
@@ -263,12 +298,12 @@ export default class Game {
       ground.material = groundMaterial;
       ground.receiveShadows = true;
       ground.checkCollisions = true;
-      // new BABYLON.PhysicsImpostor(ground, BABYLON.PhysicsImpostor.HeightmapImpostor, {
-      //     mass: 0,
-      //     friction: 1, // 0 = huge sliding, max 1
-      //     restitution: 0 // 0 = no bounce, max 1
-      //     //disableBidirectionalTransformation: true
-      //   }, scene);
+      new BABYLON.PhysicsImpostor(ground, BABYLON.PhysicsImpostor.HeightmapImpostor, {
+          mass: 0,
+          friction: 1, // 0 = huge sliding, max 1
+          restitution: 0.2 // 0 = no bounce, max 1
+          //disableBidirectionalTransformation: true
+        }, scene);
     });
 
   }

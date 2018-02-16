@@ -9,5 +9,14 @@ https://www.babylonjs-playground.com/#BEFOO
 http://www.babylonjs-playground.com/#1RKZXB#6
 
 
+Simple collision (change color on collision)
+https://www.babylonjs-playground.com/#1NASOD
+
 Simple colored box
 https://www.babylonjs-playground.com/#1ST43U#52
+
+// Apply force sample
+http://www.babylonjs-playground.com/#BEFOO#133
+
+// Crowd simulation (pathfinding)
+http://www.visualiser.fr/Babylon/Crowd/

@@ -106,7 +106,7 @@ function createScene() {
     meshPlayer.checkCollisions = true;
     meshPlayer.ellipsoid = new BABYLON.Vector3(0.5, 1, 0.5);
     meshPlayer.ellipsoidOffset = new BABYLON.Vector3(0, 2, 0);
-    meshPlayer.applyGravity = true;
+    //meshPlayer.applyGravity = true;
   });
 
   scene.registerBeforeRender(function(){
