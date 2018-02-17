@@ -2,7 +2,6 @@ import * as BABYLON from 'babylonjs';
 import * as GUI from 'babylonjs-gui';
 
 import Player from 'Player.js';
-import FirstPlayer from "FirstPlayer";
 
 export default class Game {
 
@@ -122,7 +121,11 @@ export default class Game {
     //console.log(this.player.mesh.rotation.y);
     //console.log(this.camera.alpha);
 
-    this.player.meshPlayer.rotation.y = -4.69 - this.camera.alpha;
+    // this.player.meshPlayer.rotation.y = -4.69 - this.camera.alpha;
+
+    //this.player.meshPlayer.rotation.y = -this.camera.alpha / 360;
+    this.player.meshPlayer.rotation.y = -this.camera.alpha / 180 * Math.PI;
+
     this.camera.target.x = parseFloat(this.player.meshPlayer.position.x);
     this.camera.target.y = parseFloat(this.player.meshPlayer.position.y);
     this.camera.target.z = parseFloat(this.player.meshPlayer.position.z);
@@ -160,7 +163,7 @@ export default class Game {
     // };
 
     let self = this;
-    let loadPlayerTask = assetsManager.addMeshTask("player", "", "./", "mesh/him.babylon", scene);
+    let loadPlayerTask = assetsManager.addMeshTask("player", "", "./", "mesh/player.babylon", scene);
     loadPlayerTask.onError = function (task, message, exception) {
       console.log(message, exception);
     };
@@ -301,7 +304,7 @@ export default class Game {
       new BABYLON.PhysicsImpostor(ground, BABYLON.PhysicsImpostor.HeightmapImpostor, {
           mass: 0,
           friction: 1, // 0 = huge sliding, max 1
-          restitution: 0.2 // 0 = no bounce, max 1
+          restitution: 0 // 0 = no bounce, max 1
           //disableBidirectionalTransformation: true
         }, scene);
     });
