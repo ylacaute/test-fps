@@ -26,7 +26,7 @@ export default class FPSMod {
     "shot" : {
       src: "sounds/pew.mp3",
       options: {
-        volume: 0.5
+        volume: 1
       }
     },
     "hurt" : {

@@ -3,6 +3,7 @@ import FPSMod from "game/mods/FPSMod";
 import ArenaMap from 'game/maps/ArenaMap';
 import Game from "game/Game";
 import Player from "game/Player";
+import GameMenu from "game/GameMenu";
 
 class GameLoader {
 
@@ -16,7 +17,7 @@ class GameLoader {
     let scene = this.createScene(canvas, gameMod);
     let game = new Game(canvas, gameMod, gameMap, scene);
 
-    this.loadSounds(scene, gameMod);
+    this.loadSounds(game);
 
     let assetsManager = new BABYLON.AssetsManager(scene);
     assetsManager.onFinish = this.onAllAssetsLoaded.bind(this, game);
@@ -26,9 +27,16 @@ class GameLoader {
 
   onAllAssetsLoaded(game) {
     console.log("All assets loaded");
-    this.createPlayer(game);
+
+    game.gameMenu = new GameMenu(game.scene, () => {
+      game.start();
+    });
+    game.menuCamera = this.createMenuCamera(game.scene);
+    game.player = this.createPlayer(game);
+    game.showMenu();
 
     game.scene.getEngine().runRenderLoop(() => {
+      game.update();
       game.scene.render();
     });
   }
@@ -69,8 +77,31 @@ class GameLoader {
     box.material.emmisiveColor = new BABYLON.Color3(0, 0.58, 0.86);
 
 
+
+
     console.log("Scene created successfully");
     return scene;
+  }
+
+  createMenuCamera(scene) {
+    let position = new BABYLON.Vector3(0, 20, 0);
+    let menuCamera = new BABYLON.ArcRotateCamera("Camera", 0, Math.PI / 4, Math.PI / 4, position, scene);
+    menuCamera.fov = Math.PI / 2;
+
+    let menuCameraAnimation = new BABYLON.Animation("death", "alpha", 20,
+      BABYLON.Animation.ANIMATIONTYPE_FLOAT, BABYLON.Animation.ANIMATIONLOOPMODE_CYCLE, true);
+    menuCameraAnimation.setKeys([
+      {
+        frame: 0,
+        value: 0
+      },
+      {
+        frame: 200,
+        value: Math.PI * 2
+      }
+    ]);
+    menuCamera.animations.push(menuCameraAnimation);
+    return menuCamera;
   }
 
   createEngine(canvas) {
@@ -122,15 +153,16 @@ class GameLoader {
     assetsManager.load();
   }
 
-  loadSounds(scene, mod) {
-    for(let soundName in mod.sounds) {
+  loadSounds(game) {
+    const { gameMod, scene } = game;
+    for(let soundName in gameMod.sounds) {
       console.log("Loading sound: " + soundName);
-      mod.sounds[soundName] = new BABYLON.Sound(
+      game.sounds[soundName] = new BABYLON.Sound(
         soundName,
-        mod.sounds[soundName].src,
+        gameMod.sounds[soundName].src,
         scene,
         null,
-        mod.sounds[soundName].options);
+        gameMod.sounds[soundName].options);
     }
   }
 

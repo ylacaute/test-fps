@@ -1,6 +1,6 @@
 {"autoClear":true,"clearColor":[0.6863,0.8078,0.5686],"ambientColor":[0,0,0],"gravity":[0,-9.81,0],
 "materials":[{"name":"PowerRifle.PowerRifle","id":"PowerRifle.PowerRifle","ambient":[0.8,0.8,0.8],"diffuse":[0.64,0.64,0.64],"specular":[0,0,0],"emissive":[0,0,0],"specularPower":50,"alpha":1,"backFaceCulling":true,"checkReadyOnlyOnce":true,
-"diffuseTexture":{"name":"PowerRifle.png","level":1,"hasAlpha":1,"coordinatesMode":0,"uOffset":0,"vOffset":0,"uScale":1,"vScale":1,"uAng":0,"vAng":0,"wAng":0,"wrapU":1,"wrapV":1,"coordinatesIndex":0}}],
+"diffuseTexture":{"name":"metal.jpg","level":1,"hasAlpha":1,"coordinatesMode":0,"uOffset":0,"vOffset":0,"uScale":1,"vScale":1,"uAng":0,"vAng":0,"wAng":0,"wrapU":1,"wrapV":1,"coordinatesIndex":0}}],
 "multiMaterials":[],
 "skeletons":[],
 "meshes":[{"name":"Cube","id":"Cube","materialId":"PowerRifle.PowerRifle","billboardMode":0,"position":[0,0.9066,-2.3383],"rotation":[0,0,0],"scaling":[1,1,1],"isVisible":true,"freezeWorldMatrix":false,"isEnabled":true,"useFlatShading":false,"checkCollisions":false,"receiveShadows":false
