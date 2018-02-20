@@ -36,13 +36,20 @@ export default class Game {
     this.scene = scene;
 
     window.addEventListener("keyup", this.onKeyUp.bind(this), false);
+    document.addEventListener("pointerlockchange", this.pointerLockChange.bind(this), false);
+    document.addEventListener("mspointerlockchange", this.pointerLockChange.bind(this), false);
+    document.addEventListener("mozpointerlockchange", this.pointerLockChange.bind(this), false);
+    document.addEventListener("webkitpointerlockchange", this.pointerLockChange.bind(this), false);
   }
 
   start() {
     console.log("Starting a new game !");
+    this.player.startPlaying();
+
     this.gameState = GameState.IN_GAME;
     this.gameMenu.hide();
-    this.player.startPlaying();
+    this.player.camera.attachControl(this.canvas);
+    this.requestPointerLock(this.canvas);
   }
 
   stop() {
@@ -53,13 +60,17 @@ export default class Game {
   pause() {
     console.log("Pausing the game");
     this.gameState = GameState.PAUSE;
+    this.player.camera.detachControl(this.canvas);
     this.gameMenu.show();
   }
 
   resume() {
     console.log("Continuing the game");
+
     this.gameState = GameState.IN_GAME;
     this.gameMenu.hide();
+    this.player.camera.attachControl(this.canvas);
+    this.requestPointerLock(this.canvas);
   }
 
   update() {
@@ -82,6 +93,33 @@ export default class Game {
     this.scene.activeCamera = this.menuCamera;
     this.scene.beginAnimation(this.menuCamera, 0, 200, true);
     this.gameMenu.show();
+  }
+
+  pointerLockChange() {
+    if (this.gameState !== GameState.IN_GAME)
+      return;
+    let canvas = this.canvas;
+    let controlEnabled = (document.mozPointerLockElement === canvas
+      || document.webkitPointerLockElement === canvas
+      || document.msPointerLockElement === canvas
+      || document.pointerLockElement === canvas);
+    if (!controlEnabled) {
+      // ESC has been clicked : the mouse pointer appears and we need to pause the game
+      this.pause();
+    }
+  };
+
+  requestPointerLock(canvas) {
+    canvas.requestPointerLock =
+      canvas.requestPointerLock ||
+      canvas.msRequestPointerLock ||
+      canvas.mozRequestPointerLock ||
+      canvas.webkitRequestPointerLock;
+    if (canvas.requestPointerLock) {
+      canvas.requestPointerLock();
+    } else {
+      console.log("/!\\ No pointer lock possible, please use a real browser");
+    }
   }
 
   // ESCAPE-27 - ENTER-13

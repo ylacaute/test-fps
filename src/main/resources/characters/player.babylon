@@ -1,13 +1,18 @@
 {"producer":{"name":"Blender","version":"2.78 (sub 0)","exporter_version":"5.5.0","file":"player.babylon"},
 "autoClear":true,"clearColor":[0.0509,0.0509,0.0509],"ambientColor":[0,0,0],"gravity":[0,-9.81,0],
-"materials":[{"name":"player.Material","id":"player.Material","ambient":[0.8,0.8,0.8],"diffuse":[0.64,0.64,0.64],"specular":[0.5,0.5,0.5],"emissive":[0,0,0],"specularPower":50,"alpha":1,"backFaceCulling":true,"checkReadyOnlyOnce":false,"maxSimultaneousLights":4}],
+"materials":[{"name":"player.Material","id":"player.Material","ambient":[0.8,0.8,0.8],"diffuse":[0.64,0.64,0.64],"specular":[0.5,0.5,0.5],"emissive":[0,0,0],"specularPower":50,"alpha":1,"backFaceCulling":true,"checkReadyOnlyOnce":false,"maxSimultaneousLights":4, 
+"diffuseTexture":{"name":"metal.jpg","level":1,"hasAlpha":1,"coordinatesMode":0,"uOffset":0,"vOffset":0,"uScale":1,"vScale":1,"uAng":0,"vAng":0,"wAng":0,"wrapU":1,"wrapV":1,"coordinatesIndex":0}}],
 "multiMaterials":[],
 "skeletons":[],
-"meshes":[{"name":"Cube","id":"Cube","materialId":"player.Material","billboardMode":0,"position":[-0.0054,2.1663,0.1976],"rotation":[0,0,0],"scaling":[1.0202,1.9477,0.6183],"isVisible":true,"freezeWorldMatrix":false,"isEnabled":true,"checkCollisions":false,"receiveShadows":false,"tags":""
-,"positions":[1,-1,-1,-1,-1,1,1,-1,1,-1,1,1,1,1,-1,1,1,1,-1,-1,-1,-1,1,-1]
-,"normals":[0.5773,-0.5773,-0.5773,-0.5773,-0.5773,0.5773,0.5773,-0.5773,0.5773,-0.5773,0.5773,0.5773,0.5773,0.5773,-0.5773,0.5773,0.5773,0.5773,-0.5773,-0.5773,-0.5773,-0.5773,0.5773,-0.5773]
-,"indices":[0,1,2,3,4,5,5,0,2,4,6,0,6,3,1,2,3,5,0,6,1,3,7,4,5,4,0,4,7,6,6,7,3,2,1,3]
-,"subMeshes":[{"materialIndex":0,"verticesStart":0,"verticesCount":8,"indexStart":0,"indexCount":36}]
+"meshes":[{"name":"Cube","id":"Cube","materialId":"player.Material","billboardMode":0,"position":[0,0,0],"rotation":[0,0,0],"scaling":[1,1,1],"isVisible":true,"freezeWorldMatrix":false,"isEnabled":true,"checkCollisions":false,"receiveShadows":false,"tags":""
+,"positions":[1,-1,-1,-1,-1,1,1,-1,1,-1,1,1,1,1,-1,1,1,1,1,1,1,1,-1,-1,1,1,-1,-1,-1,-1,1,-1,-1,-1,-1,-1,-1,1,1,1,-1,1,-1,1,1,-1,-1,-1,-1,1,-1
+,1,1,1,1,1,-1,1,-1,-1,1,1,-1,-1,-1,-1,-1,1,-1,-1,1,1,1,-1,1,-1,-1,1,-1,1,1]
+,"normals":[0.5773,-0.5773,-0.5773,-0.5773,-0.5773,0.5773,0.5773,-0.5773,0.5773,-0.5773,0.5773,0.5773,0.5773,0.5773,-0.5773,0.5773,0.5773,0.5773,0.5773,0.5773,0.5773,0.5773,-0.5773,-0.5773,0.5773,0.5773,-0.5773,-0.5773,-0.5773,-0.5773,0.5773,-0.5773,-0.5773,-0.5773,-0.5773,-0.5773,-0.5773,0.5773,0.5773,0.5773,-0.5773,0.5773,-0.5773,0.5773,0.5773,-0.5773,-0.5773,-0.5773,-0.5773,0.5773,-0.5773
+,0.5773,0.5773,0.5773,0.5773,0.5773,-0.5773,0.5773,-0.5773,-0.5773,0.5773,0.5773,-0.5773,-0.5773,-0.5773,-0.5773,-0.5773,0.5773,-0.5773,-0.5773,0.5773,0.5773,0.5773,-0.5773,0.5773,-0.5773,-0.5773,0.5773,-0.5773,0.5773,0.5773]
+,"uvs":[1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,1,0,0,1,0,0,0,0,1,1,1,0,0,1,1,1,1,1,1,0,1,1,0,1,1,0,0,0,1,0,1,1,1,0
+,1,1,0,1]
+,"indices":[0,1,2,3,4,5,6,7,2,8,9,10,11,12,1,13,14,5,0,15,1,3,16,4,17,18,19,20,16,9,21,22,23,24,25,26]
+,"subMeshes":[{"materialIndex":0,"verticesStart":0,"verticesCount":27,"indexStart":0,"indexCount":36}]
 ,"instances":[]}
 ],
 "morphTargetManagers":[],

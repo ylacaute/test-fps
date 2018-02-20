@@ -3,8 +3,8 @@
 
 export default class FPSMod {
 
-  gravity = [0, -0.5, 0];
-  clearColor = [0.7, 0, 0];
+  gravity = [0, 0.01, 0];
+  clearColor = [0, 0, 0.2];
 
   fog_start = 0;
   fog_end = 100;
@@ -45,10 +45,13 @@ export default class FPSMod {
       src: "sounds/RunAmok.mp3",
       options: {
         loop: true,
-        autoplay: true
+        autoplay: false
       }
     }
   };
 
-
+  // DEBUG
+  showBoundingBox = true;
+  showAxis = true;
+  groundWireframe = false;
 }

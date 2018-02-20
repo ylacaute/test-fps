@@ -4,6 +4,7 @@ import ArenaMap from 'game/maps/ArenaMap';
 import Game from "game/Game";
 import Player from "game/Player";
 import GameMenu from "game/GameMenu";
+import Helper from "game/Helper";
 
 class GameLoader {
 
@@ -23,6 +24,7 @@ class GameLoader {
     assetsManager.onFinish = this.onAllAssetsLoaded.bind(this, game);
     this.loadAssets(assetsManager, game);
 
+    window.addEventListener("contextmenu", function (e) { e.preventDefault();	});
   }
 
   onAllAssetsLoaded(game) {
@@ -35,9 +37,11 @@ class GameLoader {
     game.player = this.createPlayer(game);
     game.showMenu();
 
-    game.scene.getEngine().runRenderLoop(() => {
-      game.update();
-      game.scene.render();
+    game.scene.executeWhenReady(() => {
+      game.scene.getEngine().runRenderLoop(() => {
+        game.scene.render();
+        game.update();
+      });
     });
   }
 
@@ -45,38 +49,69 @@ class GameLoader {
     let engine = this.createEngine(canvas);
     let scene = new BABYLON.Scene(engine);
 
+    scene.gravity = new BABYLON.Vector3(0, -0.9, 0);
+    //scene.gravity = new BABYLON.Vector3(mod.gravity[0], mod.gravity[1], mod.gravity[2]);
+    scene.collisionsEnabled = true;
+    scene.enablePhysics(); // Must be initialize before impostors
+
+
     scene.ambientColor = BABYLON.Color3.FromInts(250, 250, 250);
-    scene.clearColor = new BABYLON.Vector3(mod.clearColor[0], mod.clearColor[1], mod.clearColor[2]);
-    scene.gravity = new BABYLON.Vector3(mod.gravity[0], mod.gravity[1], mod.gravity[2]);
+    //scene.clearColor = new BABYLON.Vector3(mod.clearColor[0], mod.clearColor[1], mod.clearColor[2]);
+    scene.clearColor = new BABYLON.Color3(0, 0, .2);
 
     var light = new BABYLON.HemisphericLight("HemiLight", new BABYLON.Vector3(0, 1, 0), scene);
 
-    let groundMaterial = new BABYLON.StandardMaterial("ground", scene);
-    groundMaterial.diffuseTexture = new BABYLON.Texture("maps/arena/ground.png", scene);
-    groundMaterial.diffuseTexture.uScale = 6;
-    groundMaterial.diffuseTexture.vScale = 6;
-    groundMaterial.specularColor = new BABYLON.Color3(0, 0, 0);
-    groundMaterial.emissiveColor = new BABYLON.Color3(0.3, 0.3, 0.3);
-    var ground = BABYLON.Mesh.CreateGroundFromHeightMap("ground", "maps/arena/groundHeightMap.jpg", 100, 100, 100, 0, 10, scene, true, () => {
-      ground.material = groundMaterial;
-      ground.receiveShadows = true;
-      ground.checkCollisions = true;
-      // new BABYLON.PhysicsImpostor(ground, BABYLON.PhysicsImpostor.HeightmapImpostor, {
-      //   mass: 0,
-      //   friction: 1, // 0 = huge sliding, max 1
-      //   restitution: 0 // 0 = no bounce, max 1
-      //   //disableBidirectionalTransformation: true
-      // }, scene);
-    });
+    // let groundMaterial = new BABYLON.StandardMaterial("ground", scene);
+    // groundMaterial.diffuseTexture = new BABYLON.Texture("maps/arena/ground.png", scene);
+    // groundMaterial.diffuseTexture.uScale = 6;
+    // groundMaterial.diffuseTexture.vScale = 6;
+    // groundMaterial.specularColor = new BABYLON.Color3(0, 0, 0);
+    // groundMaterial.emissiveColor = new BABYLON.Color3(0.3, 0.3, 0.3);
+    // var ground = BABYLON.Mesh.CreateGroundFromHeightMap("ground", "maps/arena/groundHeightMap.jpg", 100, 100, 100, 0, 0, scene, true, () => {
+    //   ground.material = groundMaterial;
+    //   ground.receiveShadows = true;
+    //   ground.checkCollisions = true;
+    //   new BABYLON.PhysicsImpostor(ground, BABYLON.PhysicsImpostor.HeightmapImpostor, {
+    //     mass: 0,
+    //     friction: 1, // 0 = huge sliding, max 1
+    //     restitution: 0 // 0 = no bounce, max 1
+    //     //disableBidirectionalTransformation: true
+    //   }, scene);
+    // });
+    // ground.position.y = -40;
 
+    var ground = BABYLON.Mesh.CreateGround('ground', 100, 100, 2, scene);
+    ground.material = new BABYLON.StandardMaterial("groundMat", scene);
+    ground.material.diffuseColor = new BABYLON.Color3(0, 0.5, 1);
+    ground.checkCollisions = true;
+
+    new BABYLON.PhysicsImpostor(ground, BABYLON.PhysicsImpostor.BoxImpostor, {
+      mass: 0,
+      friction: 1, // 0 = huge sliding, max 1
+      restitution: 0 // 0 = no bounce, max 1
+      //disableBidirectionalTransformation: true
+    }, scene);
+    ground.position.y = -10;
+    if (mod.groundWireframe) {
+      ground.material.wireframe = true;
+    }
 
     var box = new BABYLON.Mesh.CreateBox("box",2,scene);
     box.rotation.x = -0.2;
     box.rotation.y = -0.4;
+    box.position= new BABYLON.Vector3(5, 10, 0);
     box.material = new BABYLON.StandardMaterial("material",scene);
     box.material.emmisiveColor = new BABYLON.Color3(0, 0.58, 0.86);
+    box.checkCollisions = true;
+    box.applyGravity = true;
+    box.ellipsoid = new BABYLON.Vector3(0, 1, 0);
 
 
+    new BABYLON.PhysicsImpostor(box, BABYLON.PhysicsImpostor.BoxImpostor, { mass: 10, friction: 1, restitution: 0.2 }, scene);
+
+    if (mod.showAxis) {
+      Helper.showAxis(scene, 20);
+    }
 
 
     console.log("Scene created successfully");
@@ -177,8 +212,11 @@ class GameLoader {
   }
 
   onMeshLoaded(game, task) {
-    game.meshes[task.name] = task.loadedMeshes[0]; // one mesh per task ! currently we have no multimesh
-    game.meshes[task.name].setEnabled(false);
+    let meshes = game.meshes[task.name] = task.loadedMeshes; // one mesh per task ! currently we have no multimesh
+    meshes[0].setEnabled(false);
+    for (let i = 0; i < meshes.length; i++) {
+      meshes[i].showBoundingBox = game.gameMod.showBoundingBox;
+    }
     console.log("Loaded mesh: " + task.name);
   }
 

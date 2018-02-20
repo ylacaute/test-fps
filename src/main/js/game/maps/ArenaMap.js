@@ -12,8 +12,9 @@ export default class ArenaMap {
   };
 
   meshes = {
-    "ai" : ["tmp/", "mushroomFinal.babylon"],
-    "cube" : ["characters/", "player.babylon"]
+    "mush" : ["tmp/", "mushroomFinal.babylon"],
+    "player" : ["characters/", "player.babylon"],
+    "hammer" : ["weapons/hammer/", "hammer.babylon"]
   };
 
   ground = {

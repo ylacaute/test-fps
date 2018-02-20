@@ -1,0 +1,39 @@
+Exporter version: 5.5.0, Blender version: 2.78 (sub 0)
+========= Conversion from Blender to Babylon.js =========
+	Scene settings used:
+		selected layers only:  false
+		flat shading entire scene:  false
+		inline textures:  false
+		texture directory:  /home/epi/prog/babylon/testFPS/src/main/resources/weapons/hammer/
+	Python World class constructor completed
+	WARNING: No active camera has been assigned, or is not in a currently selected Blender layer
+	processing begun of mesh:  Head
+		WARNING: No materials have been assigned: 
+		num positions      :  2138
+		num normals        :  2138
+		num uvs            :  4276
+		num uvs2           :  0
+		num colors         :  0
+		num indices        :  3576
+		WARNING: # of 0 area faces found:  104
+	processing begun of mesh:  Handle
+		WARNING: No materials have been assigned: 
+		num positions      :  316
+		num normals        :  316
+		num uvs            :  632
+		num uvs2           :  0
+		num colors         :  0
+		num indices        :  1422
+		WARNING: # of 0 area faces found:  264
+	processing begun of mesh:  Treading
+		WARNING: No materials have been assigned: 
+		num positions      :  2764
+		num normals        :  2764
+		num uvs            :  0
+		num uvs2           :  0
+		num colors         :  0
+		num indices        :  16584
+========= Writing of scene file started =========
+========= Writing of scene file completed =========
+========= end of processing =========
+elapsed time:  0 min, 1.9034 secs

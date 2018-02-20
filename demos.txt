@@ -23,3 +23,29 @@ http://www.visualiser.fr/Babylon/Crowd/
 
 // List of nice fucking playable games !
 http://www.pixelcodr.com/games/isart2015/
+
+// Nice skull head
+http://www.babylonjs.com/scenes/assets/
+
+// Moving chararacter for FPS (collision)
+http://www.babylonjs-playground.com/#WWCK0#7
+
+// Private github
+https://github.com/eddicke/test-1
+
+// Automove camera if cross virtual line
+http://playground.babylonjs.com/#TTLMJ
+
+// FPS Game 1
+http://www.pixelcodr.com/tutos/shooter/game/index.html
+
+// FPS Game 2
+http://p215008.mittwaldserver.info/Maze/
+
+// 3D iso like game
+http://p215008.mittwaldserver.info/CleanItUp/
+
+// Using pointer mouse
+http://www.babylonjs-playground.com/#A83GX#7
+
+
