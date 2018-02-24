@@ -60,7 +60,7 @@ export default class Game {
   pause() {
     console.log("Pausing the game");
     this.gameState = GameState.PAUSE;
-    this.player.pause();
+    this.player.stopPlaying();
 
     this.gameMenu.show();
   }
@@ -76,7 +76,7 @@ export default class Game {
 
   update() {
     let deltaTime = this.scene.getEngine().getDeltaTime();
-    this.player.update(deltaTime);
+    //this.player.update(deltaTime);
 
     // switch(this.gameState) {
     //   case GameState.IN_GAME:

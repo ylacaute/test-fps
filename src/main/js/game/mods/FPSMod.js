@@ -53,7 +53,7 @@ export default class FPSMod {
   };
 
   // DEBUG
-  showBoundingBox = true;
+  showBoundingBox = false;
   showAxis = true;
   groundWireframe = false;
 }

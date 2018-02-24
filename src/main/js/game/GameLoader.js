@@ -2,7 +2,7 @@ import * as BABYLON from 'babylonjs';
 import FPSMod from "game/mods/FPSMod";
 import ArenaMap from 'game/maps/ArenaMap';
 import Game from "game/Game";
-import Player from "game/Player";
+import Player from "game/player/Player";
 import GameMenu from "game/GameMenu";
 import Helper from "game/Helper";
 
@@ -49,17 +49,20 @@ class GameLoader {
     let engine = this.createEngine(canvas);
     let scene = new BABYLON.Scene(engine);
 
-    scene.gravity = new BABYLON.Vector3(0, -0.9, 0);
+    scene.gravity = new BABYLON.Vector3(0, -9.81, 0);
     //scene.gravity = new BABYLON.Vector3(mod.gravity[0], mod.gravity[1], mod.gravity[2]);
     scene.collisionsEnabled = true;
-    scene.enablePhysics(); // Must be initialize before impostors
+    //scene.enablePhysics(); // Must be initialize before impostors
 
 
-    scene.ambientColor = BABYLON.Color3.FromInts(250, 250, 250);
+    //scene.ambientColor = BABYLON.Color3.FromInts(250, 250, 250);
+    scene.ambientColor = new BABYLON.Color3(0.3, 0.3, 0.3);
     //scene.clearColor = new BABYLON.Vector3(mod.clearColor[0], mod.clearColor[1], mod.clearColor[2]);
     scene.clearColor = new BABYLON.Color3(0, 0, .2);
 
+    var light = new BABYLON.DirectionalLight("dir01", new BABYLON.Vector3(0, -0.5, -1.0), scene);
     var light = new BABYLON.HemisphericLight("HemiLight", new BABYLON.Vector3(0, 1, 0), scene);
+
 
     // let groundMaterial = new BABYLON.StandardMaterial("ground", scene);
     // groundMaterial.diffuseTexture = new BABYLON.Texture("maps/arena/ground.png", scene);
@@ -80,37 +83,52 @@ class GameLoader {
     // });
     // ground.position.y = -40;
 
-    var ground = BABYLON.Mesh.CreateGround('ground', 100, 100, 2, scene);
-    ground.material = new BABYLON.StandardMaterial("groundMat", scene);
-    ground.material.diffuseColor = new BABYLON.Color3(0, 0.5, 1);
+    // CUBE
+    let ground = BABYLON.Mesh.CreateGround('ground', 100, 100, 2, scene);
+    ground.material = new BABYLON.StandardMaterial("ground", scene);
+    ground.material.diffuseColor = new BABYLON.Color3(0.2, 0.2, 0.2);
+    ground.material.specularColor = new BABYLON.Color3(0, 0, 0);
+    ground.receiveShadows = true;
     ground.checkCollisions = true;
-
-    new BABYLON.PhysicsImpostor(ground, BABYLON.PhysicsImpostor.BoxImpostor, {
-      mass: 0,
-      friction: 1, // 0 = huge sliding, max 1
-      restitution: 0 // 0 = no bounce, max 1
-      //disableBidirectionalTransformation: true
-    }, scene);
+    ground.physicsImpostor = new BABYLON.PhysicsImpostor(ground,
+      BABYLON.PhysicsImpostor.BoxImpostor, {
+        mass: 0,
+        friction: 1, // 0 = huge sliding, max 1
+        restitution: 0 // 0 = no bounce, max 1
+        //disableBidirectionalTransformation: true
+      }, scene);
     ground.position.y = -1;
     ground.material.wireframe = mod.groundWireframe;
 
-    var box = new BABYLON.Mesh.CreateBox("box",2,scene);
+    // CUBE
+    let box = new BABYLON.Mesh.CreateBox("box",2,scene);
     box.rotation.x = -0.2;
     box.rotation.y = -0.4;
-    box.position= new BABYLON.Vector3(5, 10, 0);
+    box.position= new BABYLON.Vector3(5, 20, 0);
     box.material = new BABYLON.StandardMaterial("material",scene);
     box.material.emmisiveColor = new BABYLON.Color3(0, 0.58, 0.86);
+    box.ellipsoid = new BABYLON.Vector3(0, 1, 0);
+    box.physicsImpostor = new BABYLON.PhysicsImpostor(box,
+      BABYLON.PhysicsImpostor.BoxImpostor, {
+        mass: 10,
+        friction: 1,
+        restitution: 0.2
+      }, scene);
     box.checkCollisions = true;
     box.applyGravity = true;
-    box.ellipsoid = new BABYLON.Vector3(0, 1, 0);
 
-
-    new BABYLON.PhysicsImpostor(box, BABYLON.PhysicsImpostor.BoxImpostor, { mass: 10, friction: 1, restitution: 0.2 }, scene);
+    // SPHERE
+    let sphere = BABYLON.Mesh.CreateSphere("sphere1", 16, 2, scene);
+    sphere.position.y = 20;
+    sphere.physicsImpostor = new BABYLON.PhysicsImpostor(sphere,
+      BABYLON.PhysicsImpostor.SphereImpostor, {
+        mass: 1,
+        restitution: 0.9
+      }, scene);
 
     if (mod.showAxis) {
       Helper.showAxis(scene, 20);
     }
-
 
     console.log("Scene created successfully");
     return scene;
