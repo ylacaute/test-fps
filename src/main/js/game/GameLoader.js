@@ -91,10 +91,8 @@ class GameLoader {
       restitution: 0 // 0 = no bounce, max 1
       //disableBidirectionalTransformation: true
     }, scene);
-    ground.position.y = -10;
-    if (mod.groundWireframe) {
-      ground.material.wireframe = true;
-    }
+    ground.position.y = -1;
+    ground.material.wireframe = mod.groundWireframe;
 
     var box = new BABYLON.Mesh.CreateBox("box",2,scene);
     box.rotation.x = -0.2;
@@ -203,21 +201,31 @@ class GameLoader {
 
   onImageLoaded(game, task) {
     game.images[task.name] = task.image;
-    console.log("Loaded image: " + task.name);
+    console.log("Loaded task '" + task.name + "' (image)");
   }
 
   onTextureLoaded(game, task) {
     game.textures[task.name] = task.texture;
-    console.log("Loaded texture: " + task.name);
+    console.log("Loaded task '" + task.name + "' (texture)");
   }
 
   onMeshLoaded(game, task) {
-    let meshes = game.meshes[task.name] = task.loadedMeshes; // one mesh per task ! currently we have no multimesh
-    meshes[0].setEnabled(false);
+    let logMsg = "Loaded task '" + task.name + "' (mesh";
+
+    if (task.loadedParticleSystems.length > 0) {
+      game.particleSystems[task.name] = task.loadedParticleSystems;
+      logMsg += ", particleSystems"
+    }
+    if (task.loadedSkeletons.length > 0) {
+      game.skeletons[task.name] = task.loadedSkeletons;
+      logMsg += ", skeletons"
+    }
+    let meshes = game.meshes[task.name] = task.loadedMeshes;
     for (let i = 0; i < meshes.length; i++) {
+      meshes[i].setEnabled(false);
       meshes[i].showBoundingBox = game.gameMod.showBoundingBox;
     }
-    console.log("Loaded mesh: " + task.name);
+    console.log(logMsg + ")");
   }
 
 }

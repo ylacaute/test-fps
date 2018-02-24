@@ -13,7 +13,7 @@ export default class ArenaMap {
 
   meshes = {
     "mush" : ["tmp/", "mushroomFinal.babylon"],
-    "player" : ["characters/", "player.babylon"],
+    "player" : ["characters/dude/", "dude.babylon"],
     "hammer" : ["weapons/hammer/", "hammer.babylon"]
   };
 

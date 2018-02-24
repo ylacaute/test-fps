@@ -24,6 +24,8 @@ export default class Game {
   images = {};
   textures = {};
   meshes = {};
+  particleSystems = {};
+  skeletons = {};
   sounds = {};
 
   // Loaded after assets
@@ -45,10 +47,8 @@ export default class Game {
   start() {
     console.log("Starting a new game !");
     this.player.startPlaying();
-
     this.gameState = GameState.IN_GAME;
     this.gameMenu.hide();
-    this.player.camera.attachControl(this.canvas);
     this.requestPointerLock(this.canvas);
   }
 
@@ -60,7 +60,8 @@ export default class Game {
   pause() {
     console.log("Pausing the game");
     this.gameState = GameState.PAUSE;
-    this.player.camera.detachControl(this.canvas);
+    this.player.pause();
+
     this.gameMenu.show();
   }
 
@@ -69,7 +70,7 @@ export default class Game {
 
     this.gameState = GameState.IN_GAME;
     this.gameMenu.hide();
-    this.player.camera.attachControl(this.canvas);
+    //this.player.camera.attachControl(this.canvas);
     this.requestPointerLock(this.canvas);
   }
 

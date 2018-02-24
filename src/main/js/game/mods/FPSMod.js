@@ -3,6 +3,8 @@
 
 export default class FPSMod {
 
+  name = "FPS Mod";
+
   gravity = [0, 0.01, 0];
   clearColor = [0, 0, 0.2];
 

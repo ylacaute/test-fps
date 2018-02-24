@@ -33,20 +33,23 @@ export default class Player {
   startingPosition = new BABYLON.Vector3(0, 40, 0);
 
 
-
   // SCENE OBJECTS
-  camera = null;
+  camera = {
+    currentCamera: null,
+    firstPersonCamera: null,
+    thirdPersonCamera: null
+  };
+
+
   body = null;
   weapon = null;
-  hammer = null;
 
   constructor(game) {
-    console.log("Creating player for " + game.gameMod);
+    console.log("Creating player for " + game.gameMod.name);
     this.game = game;
-    this.createCamera(game);
     this.createBody(game);
-    this.createWeapon(game);
-    this.hammer = new Hammer(game);
+    this.createCameras(game);
+    //this.weapon = new Hammer(game, this.firstPersonCamera);
     window.addEventListener("keydown", this.onKeyDown.bind(this), false);
     window.addEventListener("keyup", this.onKeyUp.bind(this), false);
     document.addEventListener("mousedown", this.onMouseDown.bind(this), false);
@@ -54,122 +57,115 @@ export default class Player {
   }
 
   startPlaying() {
-    this.game.scene.activeCamera = this.camera;
-    this.body.setEnabled(false);
-    this.hammer.enabled = true;
+    this.game.scene.activeCamera = this.camera.thirdPersonCamera;
+    this.game.scene.activeCamera.attachControl(this.canvas);
+    for (let i = 0; i < this.body.length; i++) {
+      this.body[i].setEnabled(true);
+    }
+//    for (let mesh in this.body) mesh.setEnabled(true);
+    //this.weapon.enabled = true;
+    //let skeletons = this.game.skeletons.player;
+    //var animation = this.game.scene.beginAnimation(skeletons[0], 0, 100, true, 1.0);
   }
 
   stopPlaying() {
-    this.body.setEnabled(true);
-    this.hammer.enabled = false;
+    for (let i = 0; i < this.body.length; i++) {
+      this.body[i].setEnabled(false);
+    }
+    //this.body.foreach((mesh) => mesh.setEnabled(false));
+    //this.weapon.enabled = false;
+    this.currentCamera.detachControl(this.canvas);
   }
 
-  update() {
-    let cameraForwardRayPosition = this.camera.getForwardRay().direction;
-    let cameraForwardRayPositionWithoutY = new BABYLON.Vector3(cameraForwardRayPosition.x, 0, cameraForwardRayPosition.z);
-    this.body.lookAt(this.body.position.add(cameraForwardRayPositionWithoutY), 0, 0, 0);
-    this.body.position.x = this.camera.position.x;
-    this.body.position.y = this.camera.position.y - 1.5;
-    this.body.position.z = this.camera.position.z;
 
+
+
+  update() {
+    //let camera = this.game.scene.activeCamera;
+    // let cameraForwardRayPosition = camera.getForwardRay().direction;
+    // let cameraForwardRayPositionWithoutY = new BABYLON.Vector3(cameraForwardRayPosition.x, 0, cameraForwardRayPosition.z);
+    // this.body[0].lookAt(this.body[0].position.add(cameraForwardRayPositionWithoutY), Math.PI, 0, 0);
+    //this.body[0].position.x = camera.position.x;
+    //this.body[0].position.y = camera.position.y - 1.5;
+    //this.body[0].position.z = camera.position.z;
+
+    this.body[0].rotation.y = - Math.PI / 2 - this.camera.thirdPersonCamera.alpha;
+    //cameraArcRotative[0].target.x = parseFloat(meshPlayer.position.x);
+    //cameraArcRotative[0].target.z = parseFloat(meshPlayer.position.z);
     // if (this.moveForward) {
     //   this.hammer.rotation.y += 10;
     // }
+    let yPos = 0;//this.body[0].position.y;
+    let speed = 2;
+    let body = this.body[0];
 
-    if (this.isMouseDown) {
 
-
-      //this.container.rotation = new BABYLON.Vector3(Math.PI / 4 + Math.sin(this.counter) + Math.cos(this.counter), 0, Math.PI / 2);
-      //this.container.rotate(BABYLON.Axis.X, Math.PI / 50, BABYLON.Space.LOCAL);
-      this.hammer.activate();
+    if (this.moveForward) {
+      body.moveWithCollisions(new BABYLON.Vector3(
+        parseFloat(Math.sin(parseFloat(body.rotation.y))) / speed,
+        yPos,
+        parseFloat(Math.cos(parseFloat(body.rotation.y))) / speed));
+    } else if (this.moveBackward) {
+      body.moveWithCollisions(new BABYLON.Vector3(
+        -parseFloat(Math.sin(parseFloat(body.rotation.y))) / speed,
+        yPos,
+        -parseFloat(Math.cos(parseFloat(body.rotation.y))) / speed));
     }
+    if (this.strafeLeft) {
+      body.moveWithCollisions(new BABYLON.Vector3(
+        parseFloat(Math.sin(parseFloat(body.rotation.y - Math.PI / 2))) / speed ,
+        yPos,
+        parseFloat(Math.cos(parseFloat(body.rotation.y - Math.PI / 2))) / speed));
+    } else if (this.strafeRight) {
+      body.moveWithCollisions(new BABYLON.Vector3(
+        parseFloat(Math.sin(parseFloat(body.rotation.y + Math.PI / 2))) / speed,
+        yPos,
+        parseFloat(Math.cos(parseFloat(body.rotation.y + Math.PI / 2))) / speed));
+    }
+
   }
 
   createBody(game) {
     console.log("Initializing player body...");
-    let body = game.meshes.player[0];
-    // ...
+    let body = game.meshes.player;
+
+    body[0].scaling = new BABYLON.Vector3(0.1, 0.1, 0.1);
+    body[0].position = new BABYLON.Vector3(4, 1, 4);
+    //body[0].rotate(BABYLON.Axis.Y, Math.PI / 2, BABYLON.Space.WORLD);
+    body[0].ellipsoid = new BABYLON.Vector3(1, 2, 1);
+    body[0].ellipsoidOffset = new BABYLON.Vector3(0.5, 2, 0.5);
+    body[0].checkCollisions = true;
+    body[0].applyGravity = true;
+    //console.log("fucking ske : ", skeletons);
     this.body = body;
+
+
+
   }
 
-  createCamera(game) {
-    let camera = new BABYLON.FreeCamera("camera", BABYLON.Vector3.Zero(), game.scene);
-    camera.position.y = 20;
-    camera.checkCollisions = true;
-    camera.applyGravity = true;
-    camera.ellipsoid = new BABYLON.Vector3(1, 2, 1);
-    camera.keysUp.push(90);
-    camera.keysDown.push(83);
-    camera.keysLeft.push(81);
-    camera.keysRight.push(68);
-    camera.position = this.startingPosition;
-    camera.attachControl(game.canvas, true);
-    this.camera = camera;
-  }
+  createCameras(game) {
+    let cam;
+    let target = this.body[0].position.clone();
 
-  createWeapon(game) {
-    console.log("Creating weapon from ", game.meshes.gun);
-    this.weapon = game.meshes.gun[0];
-    this.weapon.parent = this.camera; // The weapon will move with the player camera
-    this.weapon.material = new BABYLON.StandardMaterial("weaponMat", game.scene);
-    this.weapon.material.diffuseColor = new BABYLON.Color3(0, 0, 0);
-    this.weapon.material.specularColor = new BABYLON.Color3(1, 0, 0);
-    this.weapon.scaling = new BABYLON.Vector3(0.3, 0.3, 0.3);
-    this.weapon.position = new BABYLON.Vector3(1, -2, 2);
-    this.weapon.rotation = new BABYLON.Vector3(-Math.PI / 8, -Math.PI / 40, 0);
-    this.weapon.setEnabled(true);
+    target.y += 1;
+    cam = new BABYLON.FreeCamera("camera", target, game.scene);
+    cam.position.y = 20;
+    cam.checkCollisions = true;
+    cam.applyGravity = true;
+    cam.ellipsoid = new BABYLON.Vector3(1, 2, 1);
+    // cam.keysUp.push(90);
+    // cam.keysDown.push(83);
+    // cam.keysLeft.push(81);
+    // cam.keysRight.push(68);
+    cam.position = this.startingPosition;
+    cam.attachControl(game.canvas, true);
+    this.camera.firstPersonCamera = cam;
 
+    //.getRenderingCanvas()
 
-
-
-    //this.container.rotation = new BABYLON.Vector3(Math.PI / 4, 0, Math.PI / 2);
-
-    //this.container.position = new BABYLON.Vector3(0, -10, 0);
-
-    //game.meshes.hammer[0].rotation = new BABYLON.Vector3(Math.PI / 2, Math.PI / 2, 0);
-
-    // let wImpostor = new BABYLON.PhysicsImpostor(container, BABYLON.PhysicsImpostor.BoxImpostor, {
-    //   mass: 0,
-    //   friction: 1, // 0 = huge sliding, max 1
-    //   restitution: 0 // 0 = no bounce, max 1
-    //   //disableBidirectionalTransformation: true
-    // }, game.scene);
-    //wImpostor.setLinearVelocity(new BABYLON.Vector3(1,2,0));
-
-    //this.hammer = game.meshes.hammer[0];
-    //console.log("HAMMER : ", game.meshes.hammer);
-    //this.hammer.setEnabled(true);
-    //this.hammer.position = this.startingPosition.clone();
-    //this.hammer.position.x += 30;
-    //this.hammer.position.z += 30;
-
-    // for (let i = 0; i < game.meshes.hammer.length; i++) {
-    //   game.meshes.hammer[i].rotation = new BABYLON.Vector3(Math.PI / 2, Math.PI / 2, 0);
-    // }
-
-
-
-    //this.weapon.position = new BABYLON.Vector3(window.innerWidth * 1.1e-6, -0.0035, 0.0025);
-    // var end_position = this.weapon.position.clone();
-    // end_position.z -= 0.001;
-    // var display = new BABYLON.Animation("fire", "position", 60, BABYLON.Animation.ANIMATIONTYPE_VECTOR3, BABYLON.Animation.ANIMATIONLOOPMODE_CONSTANT);
-    // var anim_keys = [
-    //   {
-    //     frame: 0,
-    //     value: this.weapon.position
-    //   },
-    //   {
-    //     frame: 10,
-    //     value: end_position
-    //   },
-    //   {
-    //     frame: 100,
-    //     value: this.weapon.position
-    //   }
-    // ];
-    //
-    // display.setKeys(anim_keys);
-    // this.weapon.animations.push(display);
+    cam = new BABYLON.ArcRotateCamera("camera", 0, 1, 25, this.body[0], game.scene);
+    cam.attachControl(game.canvas, true);
+    this.camera.thirdPersonCamera = cam;
 
   }
 
@@ -178,6 +174,9 @@ export default class Player {
   }
 
   fire() {
+    if (this.weapon.canHit()) {
+      this.weapon.hit();
+    }
     //this.game.scene.beginAnimation(this.weapon, 0, 100, false, 10, null);
 
 
@@ -193,7 +192,7 @@ export default class Player {
   }
 
   onKeyDown(event) {
-    //console.log("KeyDown : " + event.keyCode);
+    console.log("KeyDown : " + event.keyCode);
 
     let kb = this.game.gameMod.keyBindings;
     switch(event.keyCode){
@@ -204,6 +203,7 @@ export default class Player {
       case kb.right: this.strafeRight = true; this.dir_x = -1; break;
       case 69: this.test(); break; // E
       case 82: this.test(); break; // R
+      //case 71: this.firstPersonCamera.applyGravity = !this.firstPersonCamera.applyGravity; break; // R
     }
   }
 

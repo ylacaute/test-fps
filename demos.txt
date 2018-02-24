@@ -1,4 +1,15 @@
 
+
+
+BONES
+https://doc.babylonjs.com/how_to/how_to_use_bones_and_skeletons
+
+// Controlling bones !! excellent
+https://www.babylonjs-playground.com/#1EVNNB#15
+
+
+
+
 PHYSICS
 
 http://www.babylon.actifgames.com/moveCharacter/
@@ -49,3 +60,13 @@ http://p215008.mittwaldserver.info/CleanItUp/
 http://www.babylonjs-playground.com/#A83GX#7
 
 
+// Collisions and actionManager
+http://www.babylonjs-playground.com/#KNXZF#4
+
+
+// Cool stuff
+http://www.babylonjs-playground.com/#LYCSQ#256
+
+
+// Moving with LookAt
+http://www.babylonjs-playground.com/#1JPHAD#1

@@ -2,74 +2,76 @@ import * as BABYLON from 'babylonjs';
 
 export default class Hammer {
 
-  // Pivot wrapper to change rotation point
+  // Used to change rotation point : it is the hammer parent meshes
   pivot = null;
 
-  // Contains all meshes
+  // Used to link all meshes together (parent is pivot)
   container = null;
 
-  counter = 0;
-
-  // Collision box
-  impostor = null;
+  // Keep a direct instance to the ground to check collision
   ground = null;
 
-  enabled = false;
+  // Can hit only when the hitTimer is at 0, while hitting, this value change
+  hitTimer = 0;
 
-  angle = Math.PI / 50;
+  // Can hit only every 2 seconds
+  cooldown = 2000;
 
-  activate() {
+  // Initial angle of the hammer
+  initialAngle = -Math.PI / 4;
 
-    this.pivot.rotate(BABYLON.Axis.X, this.angle, BABYLON.Space.LOCAL);
+  // Max angle on hit
+  maxAngle = Math.PI / 2;
 
-    //console.log("fucking mesh : ", this.meshes[0].getPhysicsBodyOfMesh());
-    if (this.enabled && this.meshes[0].intersectsMesh(this.ground, false)) {
-      //this.meshes[0].material.emissiveColor = new BABYLON.Color4(1, 0, 0, 1);
-      this.game.sounds.eat.play();
-      this.angle = -this.angle;
-      this.counter -= 1;
-    } else {
-      this.counter += 1;
-      //this.meshes[0].material.emissiveColor = new BABYLON.Color4(1, 1, 1, 1);
-      console.log("no");
-    }
-    if (this.angale <= 0) {
-      this.angle = -this.angle;
-    }
-  }
+  // Angle increment per frame (hit speed)
+  angleIncPerFrame = Math.PI / 20;
 
-  hit() {
-    console.log("");
-  }
+  // Used to calculate rotation direction
+  beforeMaxAngle = true;
 
-  constructor(game) {
+  // Relative to the first person camera
+  initialPosition = new BABYLON.Vector3(0, 0, 0);
+
+  constructor(game, playerCamera) {
     this.meshes = game.meshes.hammer;
     this.ground = game.scene.getMeshByName("ground");
     this.game = game;
     this.pivot = new BABYLON.TransformNode("root");
-    this.pivot.position = new BABYLON.Vector3(0, -4, 0);
+    this.pivot.position = this.initialPosition;
+    this.pivot.rotation = new BABYLON.Vector3(this.initialAngle, 0, 0);
     this.container = new BABYLON.Mesh("container", game.scene);
     this.container.parent = this.pivot;
-    this.container.position = new BABYLON.Vector3(0, -6, 0);
-    this.pivot.rotation = new BABYLON.Vector3(Math.PI / 2, 0, 0);
+    this.container.position = new BABYLON.Vector3(2, -2, 5);
     for (let i = 0; i < this.meshes.length; i++) {
       this.meshes[i].parent = this.container;
+      this.meshes[i].setEnabled(true);
     }
-    this.meshes[0].setEnabled(true);
+    this.meshes[0].position.y = 8.3;
+
+    this.pivot.parent = playerCamera;
+
+    game.scene.registerBeforeRender(this.render.bind(this));
+
+    this.pivot.scaling = new BABYLON.Vector3(0.5, 0.5, 0.5);
+
+
+    //this.meshes[0].setEnabled(true);
 
     //this.meshes[0].ellipsoid = new BABYLON.Vector3(0.5, 1, 0.5);
     //var vis = 100; // visibility scaling
     //this.meshes[0]._boundingInfo = new BABYLON.BoundingInfo(new BABYLON.Vector3(-vis, -vis, -vis), new BABYLON.Vector3(vis, vis, vis));
     //this.meshes[0].checkCollisions = true;
 
-    // this.container.actionManager = new BABYLON.ActionManager(game.scene);
-    // this.container.actionManager.registerAction(
-    //   new BABYLON.InterpolateValueAction(
-    //     BABYLON.ActionManager.OnIntersectionEnterTrigger,
-    //     light,
-    //     'diffuse',
-    //     BABYLON.Color3.Black(),
-    //     1000
+    // this.pivot.actionManager = new BABYLON.ActionManager(game.scene);
+    // this.pivot.actionManager.registerAction(
+    //   new BABYLON.ExecuteCodeAction({
+    //       trigger: BABYLON.ActionManager.OnIntersectionEnterTrigger,
+    //       parameter: {
+    //         mesh: this.game.ground
+    //       }
+    //     }, () => {
+    //       console.log("COLLISION !!!!!!!!!!");
+    //     }
     //   )
     // );
     //
@@ -83,5 +85,33 @@ export default class Hammer {
   }
 
 
+  canHit() {
+    return this.hitTimer === 0;
+  }
+
+  hit() {
+    this.hitTimer = 1;
+  }
+
+  render() {
+    if (this.hitTimer === 0) {
+      return;
+    }
+
+    this.pivot.rotation.x += this.angleIncPerFrame * this.hitTimer;
+
+    if (this.meshes[0].intersectsMesh(this.ground, false)) {
+      this.game.sounds.eat.play();
+      this.hitTimer = -1;
+    }
+
+    // Check collision with other guys
+
+    if (this.hitTimer > 0 && this.pivot.rotation.x >= this.maxAngle) {
+      this.hitTimer = -1;
+    } else if (this.hitTimer < 0 && this.pivot.rotation.x < this.initialAngle) {
+      this.hitTimer = 0;
+    }
+  }
 
 }
