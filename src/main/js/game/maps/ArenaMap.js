@@ -8,13 +8,15 @@ export default class ArenaMap {
 
   textures = {
     "sand" : "textures/ground_sand.png",
-    "metal" : "textures/metal.jpg"
+    "metal" : "textures/metal.jpg",
+    "ground" : "textures/ground/ground_01.jpg"
   };
 
   meshes = {
-    "mush" : ["tmp/", "mushroomFinal.babylon"],
-    "player" : ["characters/dude/", "dude.babylon"],
-    "hammer" : ["weapons/hammer/", "hammer.babylon"]
+    "mush" : ["tmp/", "mushroomFinal.babylon", false],
+    "player" : ["characters/dude/", "dude.babylon", true],
+    "hammer" : ["weapons/hammer/", "hammer.babylon", false],
+    "gun" : ["weapons/", "PowerRifle.babylon", false]
   };
 
   ground = {

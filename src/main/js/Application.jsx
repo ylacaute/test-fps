@@ -5,7 +5,16 @@ var SPECTOR = require("spectorjs");
 import { connect } from 'react-redux'
 import styleCSS from "../sass/index.scss";
 //import Game from 'Game.js';
+// Converts from degrees to radians.
 
+Math.radians = function(degrees) {
+  return degrees * Math.PI / 180;
+};
+
+// Converts from radians to degrees.
+Math.degrees = function(radians) {
+  return radians * 180 / Math.PI;
+};
 
 import { GameLoader, GameMod, GameMap } from 'game/GameLoader.js';
 

@@ -29,8 +29,8 @@
     "chai"
   ],
   "dependencies": {
-    "babylonjs": "^3.2.0-alpha7",
-    "babylonjs-gui": "^3.2.0-alpha7",
+    "babylonjs": "^3.1.0",
+    "babylonjs-gui": "^3.1.0",
     "react": "^15.6.1",
     "react-dom": "^15.6.1",
     "shortcutjs": "^1.6.0"
@@ -64,6 +64,7 @@
     "mocha": "^3.4.2",
     "mocha-loader": "^1.1.1",
     "node-sass": "^4.5.3",
+    "oimo": "^1.0.9",
     "phantomjs-polyfill": "0.0.2",
     "react-hot-loader": "next",
     "react-redux": "^5.0.5",

@@ -2,15 +2,7 @@ import * as BABYLON from 'babylonjs';
 
 import Hammer from "game/weapons/Hammer";
 
-// Converts from degrees to radians.
-Math.radians = function(degrees) {
-  return degrees * Math.PI / 180;
-};
 
-// Converts from radians to degrees.
-Math.degrees = function(radians) {
-  return radians * 180 / Math.PI;
-};
 
 let CameraType = {
   UNSET : -1,
@@ -25,6 +17,7 @@ export default class Player {
   moveBackward = false;
   strafeLeft = false;
   strafeRight = false;
+  moving = false;
   jumping = false;
   running = false;
   next_pos = { x: 0, y: 0, z: 0 };
@@ -86,8 +79,8 @@ export default class Player {
 
   beforeRender() {
     let body = this.body.container;
-    let gravity = -0.5;
-    let speed = 2;
+    let gravity = 0.1;
+    let speed = 0.05;
 
     //let camera = this.game.scene.activeCamera;
     // let cameraForwardRayPosition = camera.getForwardRay().direction;
@@ -109,32 +102,36 @@ export default class Player {
 
     // MOVEMENT
     if (this.moveForward && !this.moveBackward) {
-      body.moveWithCollisions(new BABYLON.Vector3(
+      body.impostor.setLinearVelocity(new BABYLON.Vector3(
+      //body.moveWithCollisions(new BABYLON.Vector3(
         -parseFloat(Math.sin(parseFloat(body.rotation.y))) / speed,
-        gravity,
+        body.impostor.getLinearVelocity().y,
         -parseFloat(Math.cos(parseFloat(body.rotation.y))) / speed));
     } else if (this.moveBackward && !this.moveForward) {
-      body.moveWithCollisions(new BABYLON.Vector3(
+      body.impostor.setLinearVelocity(new BABYLON.Vector3(
         parseFloat(Math.sin(parseFloat(body.rotation.y))) / speed,
-        gravity,
+        body.impostor.getLinearVelocity().y,
         parseFloat(Math.cos(parseFloat(body.rotation.y))) / speed));
     }
     if (this.strafeLeft && !this.strafeRight) {
-      body.moveWithCollisions(new BABYLON.Vector3(
+      body.impostor.setLinearVelocity(new BABYLON.Vector3(
         parseFloat(Math.sin(parseFloat(body.rotation.y + Math.PI / 2))) / speed,
-        gravity,
+        body.impostor.getLinearVelocity().y,
         parseFloat(Math.cos(parseFloat(body.rotation.y + Math.PI / 2))) / speed));
     } else if (this.strafeRight && !this.strafeLeft) {
-      body.moveWithCollisions(new BABYLON.Vector3(
+      body.impostor.setLinearVelocity(new BABYLON.Vector3(
         parseFloat(Math.sin(parseFloat(body.rotation.y - Math.PI / 2))) / speed ,
-        gravity,
+        body.impostor.getLinearVelocity().y,
         parseFloat(Math.cos(parseFloat(body.rotation.y - Math.PI / 2))) / speed));
     }
 
+
+
+
     // GRAVITY IF NOT MOVING
-    if (!this.moveForward && !this.strafeLeft) {
-      body.moveWithCollisions(new BABYLON.Vector3(0, gravity, 0));
-    }
+    // if (!this.moveForward && !this.strafeLeft) {
+    //   body.moveWithCollisions(new BABYLON.Vector3(0, gravity, 0));
+    // }
 
     // JUMP
 
@@ -142,38 +139,80 @@ export default class Player {
 
   createBody(game) {
     console.log("Initializing player body...");
-    let skeletons = game.skeletons.player;
-    let meshes = game.meshes.player;
-    let container = meshes[0];//new BABYLON.Mesh.CreateBox("box", 2, game.scene);////new BABYLON.Mesh("container", game.scene);
-    container.showBoundingBox = true;
-    container.position = new BABYLON.Vector3(4, 50, 4);
-    container.ellipsoid = new BABYLON.Vector3(0.5, 1, 0.1);
-    container.ellipsoidOffset = new BABYLON.Vector3(0.5, 1, 0.5);
-    container.checkCollisions = true;
-    container.showBoundingBox = true;
-    //container.rotate(BABYLON.Axis.Y, Math.PI / 2, BABYLON.Space.WORLD);
-    container.rotation.y += Math.PI / 2;
-    meshes[0].scaling = new BABYLON.Vector3(0.1, 0.1, 0.1);
-    //body[0].position = new BABYLON.Vector3(4, 1, 4);
-    for (let i = 0; i < meshes.length; i++) {
-      meshes[i].setEnabled(true);
-    }
-    //meshes[0].parent = container;
-    this.body.meshes = meshes;
-    this.body.container = container;
+    this.body.meshes = game.meshes.player;
+    //this.body.container = game.meshes.player[0];
+    //this.body.container = new BABYLON.Mesh("container", game.scene);
+    this.body.container = new BABYLON.Mesh.CreateBox("box", 2, game.scene);
+    this.body.container.position = new BABYLON.Vector3(4, 50, 4);
 
+    this.body.meshes[0].scaling = new BABYLON.Vector3(0.1, 0.1, 0.1);
+    this.body.meshes[0].parent = this.body.container;
 
-    // this.body.container.physicsImpostor = new BABYLON.PhysicsImpostor(
+    this.body.container.impostor = new BABYLON.PhysicsImpostor(this.body.container,
+      BABYLON.PhysicsImpostor.BoxImpostor, {
+        mass: 10,
+        friction: 0,
+        restitution: 0,
+        disableBidirectionalTransformation: true
+      }, game.scene);
+
+    //this.createCharacter2(game.scene);
+    // new BABYLON.PhysicsImpostor(
     //   this.body.container,
-    //   BABYLON.PhysicsImpostor.BoxImpostor, {
+    //   BABYLON.PhysicsImpostor.MeshImpostor, {
     //     mass: 10,
     //     friction: 1,    // 0 = huge sliding, max 1
     //     restitution: 0, // 0 = no bounce, max 1
     //     ignoreParent: true,
     //     disableBidirectionalTransformation: true
     //   }, game.scene);
-    var animation = game.scene.beginAnimation(skeletons[0], 0, 100, true, 1.0);
+    var animation = game.scene.beginAnimation(game.skeletons.player[0], 0, 100, true, 1.0);
+
+    let ground = game.scene.getMeshByName("ground");
+
+    this.body.container.impostor.registerOnPhysicsCollide(ground.physicsImpostor, function(main, collided) {
+      //main.object.material.diffuseColor = new BABYLON.Color3(Math.random(), Math.random(), Math.random());
+      console.log("COLLISION PLAYER ON GROUND !!!!!!!!!!!!");
+    });
+
   }
+
+  createCharacter2 = (scene) => {
+
+    let blueMat = new BABYLON.StandardMaterial("blueMat", scene);
+    blueMat.ambientColor = new BABYLON.Color3(0, 0, 1);
+    let sphere = BABYLON.Mesh.CreateSphere("sphere1", 30, 2, scene);
+    sphere.position.y = 20;
+    sphere.material = blueMat;
+    sphere.physicsImpostor = new BABYLON.PhysicsImpostor(sphere,
+      BABYLON.PhysicsImpostor.SphereImpostor, {
+        mass: 1,
+        restitution: 0.9
+      }, scene);
+
+
+    console.log("Creating small guy...");
+    BABYLON.SceneLoader.ImportMesh("", "characters/dude/", "dude.babylon", scene,
+      function (newMeshes, particleSystems, skeletons) {
+        let smallDude = newMeshes[0];
+        smallDude.parent = sphere;
+        smallDude.scaling = new BABYLON.Vector3(0.1,0.1,0.1);
+        smallDude.position = new BABYLON.Vector3(0, 0, 0);
+        scene.beginAnimation(skeletons[0], 0, 100, true, 1.0);
+
+        // THIS IMPOSTOR SEEMS TO WORK BUT WRITE THIS ERROR ON CONSOLE :
+        //   BJS - [17:37:58]: Unable to import meshes from Scenes/Dude/Dude.babylon: Error in onSuccess callback
+        // smallDude.physicsImpostor = new BABYLON.PhysicsImpostor(
+        //   smallDude,
+        //   BABYLON.PhysicsImpostor.BoxImpostor, {
+        //     mass: 10,
+        //     friction: 1,
+        //     restitution: 0
+        //   }, scene);
+
+      });
+
+  };
 
   createCameras(game) {
     let cam;
@@ -197,8 +236,14 @@ export default class Player {
     //.getRenderingCanvas()
 
     //cam = new BABYLON.ArcRotateCamera("camera", 0, 1, 25, this.body[0], game.scene);
-    cam = new BABYLON.ArcRotateCamera("camera", 0, 1, 25, this.body.container, game.scene);
+    cam = new BABYLON.ArcRotateCamera("camera", 0, 1, 20, this.body.container, game.scene);
     cam.attachControl(game.canvas, true);
+    // cam.maxZ = 5000;
+    // cam.lowerRadiusLimit = 120;
+    // cam.upperRadiusLimit = 430;
+    // cam.lowerBetaLimit =0.75;
+    // cam.upperBetaLimit =1.58 ;
+
     this.camera.thirdPersonCamera = cam;
 
     this.setCameraType(CameraType.THIRD_PERSON);
@@ -243,9 +288,9 @@ export default class Player {
   }
 
   fire() {
-    if (this.weapon.canHit()) {
-      this.weapon.hit();
-    }
+    // if (this.weapon.canHit()) {
+    //   this.weapon.hit();
+    // }
     //this.game.scene.beginAnimation(this.weapon, 0, 100, false, 10, null);
 
 
@@ -266,10 +311,10 @@ export default class Player {
     let kb = this.game.gameMod.keyBindings;
     switch(event.keyCode){
       case kb.jump: this.running = true; break;
-      case kb.forward: this.moveForward = true; this.dir_z = 1; break;
-      case kb.backward: this.moveBackward = true; this.dir_z = -1; break;
-      case kb.left: this.strafeLeft = true; this.dir_x = 1; break;
-      case kb.right: this.strafeRight = true; this.dir_x = -1; break;
+      case kb.forward: this.moveForward = true; this.moving = true; break;
+      case kb.backward: this.moveBackward = true; this.moving = true; break;
+      case kb.left: this.strafeLeft = true; this.moving = true; break;
+      case kb.right: this.strafeRight = true; this.moving = true; break;
       case 69: this.switchCameraType(); break; // E
       case 82: this.test(); break; // R
       //case 71: this.firstPersonCamera.applyGravity = !this.firstPersonCamera.applyGravity; break; // R
@@ -284,6 +329,10 @@ export default class Player {
       case kb.backward: this.moveBackward = false; this.dir_z = 0; break;
       case kb.left: this.strafeLeft = false; this.dir_x = 0; break;
       case kb.right: this.strafeRight = false; this.dir_x = 0; break;
+    }
+    if (!this.moveForward && !this.moveBackward && !this.strafeLeft && !this.strafeRight) {
+      this.moving = false;
+      this.body.container.impostor.setLinearVelocity(new BABYLON.Vector3(0, 0, 0));
     }
   }
 

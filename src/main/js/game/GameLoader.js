@@ -30,6 +30,12 @@ class GameLoader {
   onAllAssetsLoaded(game) {
     console.log("All assets loaded");
 
+    this.createLights(game.scene);
+    this.createSkyBox(game.scene);
+    this.createGround(game);
+    this.addSamples(game.scene);
+    console.log("Scene populated successfully");
+
     game.gameMenu = new GameMenu(game.scene, () => {
       game.start();
     });
@@ -49,21 +55,63 @@ class GameLoader {
     let engine = this.createEngine(canvas);
     let scene = new BABYLON.Scene(engine);
 
-    scene.gravity = new BABYLON.Vector3(0, -9.81, 0);
-    //scene.gravity = new BABYLON.Vector3(mod.gravity[0], mod.gravity[1], mod.gravity[2]);
-    scene.collisionsEnabled = true;
-    //scene.enablePhysics(); // Must be initialize before impostors
-
-
-    //scene.ambientColor = BABYLON.Color3.FromInts(250, 250, 250);
+    scene.enablePhysics(new BABYLON.Vector3(0,-10,0), new BABYLON.CannonJSPlugin());
+    //scene.enablePhysics();//new BABYLON.Vector3(0,-10,0), new BABYLON.OimoJSPlugin());
+    //scene.enablePhysics(new BABYLON.Vector3(0,-9.81, 0), new BABYLON.OimoJSPlugin());
+    scene.gravity = new BABYLON.Vector3(0,-10,0);
     scene.ambientColor = new BABYLON.Color3(0.3, 0.3, 0.3);
-    //scene.clearColor = new BABYLON.Vector3(mod.clearColor[0], mod.clearColor[1], mod.clearColor[2]);
     scene.clearColor = new BABYLON.Color3(0, 0, .2);
 
-    var light = new BABYLON.DirectionalLight("dir01", new BABYLON.Vector3(0, -0.5, -1.0), scene);
-    var light = new BABYLON.HemisphericLight("HemiLight", new BABYLON.Vector3(0, 1, 0), scene);
+    BABYLON.Engine.ShadersRepository = "shaders/";
 
+    //scene.gravity = new BABYLON.Vector3(0, -9.81, 0);
+    //scene.collisionsEnabled = true;
 
+    if (mod.showAxis) {
+      Helper.showAxis(scene, 20);
+    }
+    console.log("Scene created successfully");
+    return scene;
+  }
+
+  createLights(scene) {
+    //var light = new BABYLON.DirectionalLight("dir01", new BABYLON.Vector3(0, -0.5, -1.0), scene);
+    let light = new BABYLON.HemisphericLight("HemiLight", new BABYLON.Vector3(1, 1, 1), scene);
+  }
+
+  createSkyBox(scene, mod) {
+    let skybox = BABYLON.Mesh.CreateSphere("skyBox", 10, 2500, scene);
+    let shader = new BABYLON.ShaderMaterial("gradient", scene, "gradient", {});
+    shader.setFloat("offset", 0);
+    shader.setFloat("exponent", 0.6);
+    shader.setColor3("topColor", BABYLON.Color3.FromInts(0,119,255));
+    shader.setColor3("bottomColor", BABYLON.Color3.FromInts(240,240, 255));
+    shader.backFaceCulling = false;
+    skybox.material = shader;
+  }
+
+  createGround(game) {
+    let scene = game.scene;
+    let texture = game.textures.ground;
+    let ground = BABYLON.Mesh.CreateGround('ground', 100, 100, 2, scene);
+
+    console.log("game.textures : ", game.textures);
+    texture.uScale = texture.vScale = 10;
+
+    ground.material = new BABYLON.StandardMaterial("ground", scene);
+    ground.material.specularColor = new BABYLON.Color3(0.5, 0.5, 0.5);
+    ground.material.wireframe = game.gameMod.groundWireframe;
+    ground.material.diffuseTexture = texture;
+    ground.position.y = -1;
+    ground.receiveShadows = true;
+    ground.physicsImpostor = new BABYLON.PhysicsImpostor(
+      ground,
+      BABYLON.PhysicsImpostor.BoxImpostor, {
+        mass: 0,
+        friction: 1, // 0 = huge sliding, max 1
+        restitution: 0 // 0 = no bounce, max 1
+        //disableBidirectionalTransformation: true
+      }, scene);
     // let groundMaterial = new BABYLON.StandardMaterial("ground", scene);
     // groundMaterial.diffuseTexture = new BABYLON.Texture("maps/arena/ground.png", scene);
     // groundMaterial.diffuseTexture.uScale = 6;
@@ -83,56 +131,46 @@ class GameLoader {
     // });
     // ground.position.y = -40;
 
-    // CUBE
-    let ground = BABYLON.Mesh.CreateGround('ground', 100, 100, 2, scene);
-    ground.material = new BABYLON.StandardMaterial("ground", scene);
-    ground.material.diffuseColor = new BABYLON.Color3(0.2, 0.2, 0.2);
-    ground.material.specularColor = new BABYLON.Color3(0, 0, 0);
-    ground.receiveShadows = true;
-    ground.checkCollisions = true;
-    ground.physicsImpostor = new BABYLON.PhysicsImpostor(ground,
-      BABYLON.PhysicsImpostor.BoxImpostor, {
-        mass: 0,
-        friction: 1, // 0 = huge sliding, max 1
-        restitution: 0 // 0 = no bounce, max 1
-        //disableBidirectionalTransformation: true
-      }, scene);
-    ground.position.y = -1;
-    ground.material.wireframe = mod.groundWireframe;
+  }
 
+  addSamples(scene) {
     // CUBE
+    let redMat = new BABYLON.StandardMaterial("redMat", scene);
+    redMat.ambientColor = new BABYLON.Color3(1, 0, 0);
+
+    let container = new BABYLON.Mesh("container", scene);
     let box = new BABYLON.Mesh.CreateBox("box",2,scene);
+    box.material = redMat;
     box.rotation.x = -0.2;
     box.rotation.y = -0.4;
     box.position= new BABYLON.Vector3(5, 20, 0);
-    box.material = new BABYLON.StandardMaterial("material",scene);
-    box.material.emmisiveColor = new BABYLON.Color3(0, 0.58, 0.86);
     box.ellipsoid = new BABYLON.Vector3(0, 1, 0);
+    box.parent = container;
     box.physicsImpostor = new BABYLON.PhysicsImpostor(box,
       BABYLON.PhysicsImpostor.BoxImpostor, {
         mass: 10,
         friction: 1,
         restitution: 0.2
       }, scene);
-    box.checkCollisions = true;
-    box.applyGravity = true;
+    // box.² = true;
+    // box.applyGravity = true;
 
     // SPHERE
-    let sphere = BABYLON.Mesh.CreateSphere("sphere1", 16, 2, scene);
-    sphere.position.y = 20;
-    sphere.physicsImpostor = new BABYLON.PhysicsImpostor(sphere,
-      BABYLON.PhysicsImpostor.SphereImpostor, {
-        mass: 1,
-        restitution: 0.9
-      }, scene);
+    // let blueMat = new BABYLON.StandardMaterial("blueMat", scene);
+    // blueMat.ambientColor = new BABYLON.Color3(0, 0, 1);
+    // let sphere = BABYLON.Mesh.CreateSphere("sphere1", 16, 2, scene);
+    // sphere.position.y = 20;
+    // sphere.material = blueMat;
+    // sphere.physicsImpostor = new BABYLON.PhysicsImpostor(sphere,
+    //   BABYLON.PhysicsImpostor.SphereImpostor, {
+    //     mass: 1,
+    //     restitution: 0.9
+    //   }, scene);
 
-    if (mod.showAxis) {
-      Helper.showAxis(scene, 20);
-    }
-
-    console.log("Scene created successfully");
-    return scene;
   }
+
+
+
 
   createMenuCamera(scene) {
     let position = new BABYLON.Vector3(0, 20, 0);
@@ -178,13 +216,13 @@ class GameLoader {
 
     for (let imageName in map.images) {
       let task = assetsManager.addImageTask(imageName, map.images[imageName]);
-      task.onSuccess = this.onTextureLoaded.bind(this, game);
+      task.onSuccess = this.onImageLoaded.bind(this, game);
       task.onError = console.error;
     }
 
     for (let textureName in map.textures) {
       let task = assetsManager.addTextureTask(textureName, map.textures[textureName]);
-      task.onSuccess = this.onImageLoaded.bind(this, game);
+      task.onSuccess = this.onTextureLoaded.bind(this, game);
       task.onError = console.error;
     }
 
@@ -201,7 +239,7 @@ class GameLoader {
     }
 
     console.log("Loading assets...");
-    assetsManager.load();
+      assetsManager.load();
   }
 
   loadSounds(game) {
@@ -240,9 +278,25 @@ class GameLoader {
     }
     let meshes = game.meshes[task.name] = task.loadedMeshes;
     for (let i = 0; i < meshes.length; i++) {
-      meshes[i].setEnabled(false);
+      meshes[i].setEnabled(game.gameMap.meshes[task.name][2]);
       meshes[i].showBoundingBox = game.gameMod.showBoundingBox;
     }
+
+    // if (task.name === 'player') {
+    //   console.log("CREATING PLAYER IMPOSTOR");
+    //   //meshes[0].position = new BABYLON.Vector3(20, 50, 20);
+    //   //meshes[0].scaling = new BABYLON.Vector3(0.1, 0.1, 0.1);
+    //   meshes[0].physicsImpostor = new BABYLON.PhysicsImpostor(
+    //     meshes[0],
+    //     BABYLON.PhysicsImpostor.BoxImpostor, {
+    //       mass: 10,
+    //       friction: 1,    // 0 = huge sliding, max 1
+    //       restitution: 0, // 0 = no bounce, max 1
+    //       ignoreParent: true,
+    //       disableBidirectionalTransformation: true
+    //     }, game.scene);
+    // }
+
     console.log(logMsg + ")");
   }
 

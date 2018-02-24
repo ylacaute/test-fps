@@ -1,5 +1,7 @@
 
 
+MY SCENE
+https://www.babylonjs-playground.com/indexstable#YYQ1LC#18
 
 BONES
 https://doc.babylonjs.com/how_to/how_to_use_bones_and_skeletons
@@ -7,7 +9,9 @@ https://doc.babylonjs.com/how_to/how_to_use_bones_and_skeletons
 // Controlling bones !! excellent
 https://www.babylonjs-playground.com/#1EVNNB#15
 
-
+EFFECTS
+// Nice fucking effect (material, light...)
+http://www.babylonjs-playground.com/#1CMD3G#12
 
 
 PHYSICS
@@ -70,3 +74,19 @@ http://www.babylonjs-playground.com/#LYCSQ#256
 
 // Moving with LookAt
 http://www.babylonjs-playground.com/#1JPHAD#1
+
+
+// Ambient, specular, diffuse colors
+http://www.babylonjs-playground.com/#20OAV9#14
+
+
+// Nice demos (tree and skull rotating with light flashing)
+http://www.babylonjs-playground.com/#2CHATH#0
+http://www.babylonjs-playground.com/#2CHATH#4
+
+// Nice editor
+http://test4.studioleonardo.com:81/
+
+//////////////////////////////////////////////////////////////////////////
+// OMG
+http://race.assassinscreedpirates.com/

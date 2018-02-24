@@ -21,7 +21,7 @@ export default class FPSMod {
   };
 
   meshes = {
-    "gun" : ["weapons/", "PowerRifle.babylon"]
+
   };
 
   sounds = {
