@@ -23,6 +23,8 @@ http://urbanproductions.com/wingy/babylon/thruster/t26/flyer26.htm
 https://www.babylonjs-playground.com/#BEFOO
 http://www.babylonjs-playground.com/#1RKZXB#6
 
+// Nice canon ball !!
+https://www.babylonjs-playground.com/#25OQ8V#13
 
 Simple collision (change color on collision)
 https://www.babylonjs-playground.com/#1NASOD
@@ -90,3 +92,24 @@ http://test4.studioleonardo.com:81/
 //////////////////////////////////////////////////////////////////////////
 // OMG
 http://race.assassinscreedpirates.com/
+
+// Third person character moving and fighting
+http://babylon.furcatomasz.pl/
+
+
+// robot ?
+http://www.babylonjs-playground.com/#G9ZBQ1#6
+
+
+// hexagonal world cases
+http://www.babylonjs-playground.com/#RFIRC#0
+
+
+// Demo with SPS for optimization
+// http://www.html5gamedevs.com/topic/21957-how-to-optimise-performance-when-using-a-lot-of-instances/
+http://www.babylonjs-playground.com/#WCDZS#16
+http://www.babylonjs-playground.com/#WCDZS#19
+
+
+// Camera (basic)
+http://www.babylonjs-playground.com/#1SGRQM

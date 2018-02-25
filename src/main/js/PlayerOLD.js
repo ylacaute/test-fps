@@ -252,6 +252,7 @@ export default class Player {
         camera.radius = 5;
     };
 
+
     scene.registerBeforeRender(beforeRenderFunction);
 
   }

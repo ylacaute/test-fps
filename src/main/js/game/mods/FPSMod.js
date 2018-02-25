@@ -49,7 +49,19 @@ export default class FPSMod {
         loop: true,
         autoplay: false
       }
-    }
+    },
+    "jump" : {
+      src:"sounds/jump1.wav",
+      options: {
+        volume: 0.1
+      }
+    },
+    "land" : {
+      src:"sounds/land1.wav",
+      options: {
+        volume: 0.1
+      }
+    },
   };
 
   // DEBUG
