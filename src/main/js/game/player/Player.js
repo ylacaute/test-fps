@@ -12,38 +12,21 @@ let CameraType = {
 
 export default class Player {
 
-  // Number of frames to take off (avoid collision check during this time)
-  TAKE_OFF_FRAMES = 5;
-
-  gravity = -0.3;
+  // Ignore x successive collisions on ground (bounces)
+  IGNORE_SUCCESSIVE_GROUND_COLLISION_FRAME = 3;
 
   game = null;
   moveForward = false;
   moveBackward = false;
   strafeLeft = false;
   strafeRight = false;
-  requireStopMoveForward = false;
-  requireStopMoveBackward = false;
-  requireStopStrafeLeft = false;
-  requireStopStrafeRight = false;
   moving = false;
   jumping = false;
-  jumpVector = null;
-  jumpTakeOffFrames = this.TAKE_OFF_FRAMES;
-
-  onAir = false;
-  running = false;
-  next_pos = { x: 0, y: 0, z: 0 };
-
   isMouseDown = false;
+  speed = 50;
+  ignoredSuccessiveGroundCollision = 0;
 
-  speed = 0.5;
-
-
-
-  force_y = 0;
   startingPosition = new BABYLON.Vector3(0, 40, 0);
-
 
   // SCENE OBJECTS
   camera = {
@@ -85,10 +68,12 @@ export default class Player {
   }
 
   enableMeshes(value) {
-    this.body.container.setEnabled(value);
+    for (let i = 0; i < this.body.meshes.length; i++) {
+      this.body.meshes[i].setEnabled(value);
+    }
   }
 
-  beforeRender() {
+  updateCamera() {
     let body = this.body.container;
     let cam = this.camera.current;
 
@@ -98,28 +83,27 @@ export default class Player {
       body.rotation.y = - Math.PI + cam.rotation.y;
       cam.position = body.position.clone();
       cam.position.y += 4;
+      cam.position.z -= 4;
     }
-    if (this.jumpTakeOffFrames > 0) {
-      this.jumpTakeOffFrames--;
-    }
-    if (this.onAir && this.jumpTakeOffFrames === 0
-          && body.intersectsMesh(this.game.scene.getMeshByName("ground"), true)) {
-        this.landing();
-    }
-    if (this.onAir && body.intersectsMesh(this.game.scene.getMeshByName("box"), true)) {
-      this.onAir = false;
-    }
+  }
 
-    if (this.jumping) { // Jumping, can't change any direction
-      body.moveWithCollisions(this.jumpVector);
-    } else if (this.moving) { // Moving and apply gravity
-      body.moveWithCollisions(this.getCurrentMoveVector(body, this.gravity, this.speed));
-    } else { // Just apply gravity
-      body.moveWithCollisions(new BABYLON.Vector3(0, this.gravity, 0));
+  beforeRender() {
+    this.updateCamera();
+
+    let body = this.body.container;
+
+    if (body.intersectsMesh(this.game.scene.getMeshByName("box2"), true)) {
+      this.game.scene.getMeshByName("box2").material.diffuseColor = new BABYLON.Color3(Math.random(), Math.random(), Math.random());
     }
-
-    //console.log("ON AIR : " + this.onAir);
-
+    if (this.jumping) {
+      // Jumping, can't change movement
+    } else if (this.moving) {
+      // Moving and apply gravity
+      body.impostor.setLinearVelocity(this.getCurrentMoveVector(body, this.gravity, this.speed));
+    } else {
+      // Just apply gravity
+      body.impostor.setLinearVelocity(new BABYLON.Vector3(0, body.impostor.getLinearVelocity().y, 0));
+    }
   }
 
   getCurrentMoveVector(body, gravity, speed) {
@@ -142,100 +126,65 @@ export default class Player {
         zDir = -zDir;
       }
     }
+    gravity = body.impostor.getLinearVelocity().y;
     return new BABYLON.Vector3(xDir, gravity, zDir);
   }
 
   landing() {
-    this.onAir = false;
     this.game.sounds.land.play();
-
-    console.log("End player jump");
     this.jumping = false;
     this.game.scene.stopAnimation(this.body.container, "jump");
-    if (this.requireStopMoveForward) {
-      this.moveForward = this.requireStopMoveForward = false;
-    }
-    if (this.requireStopMoveBackward) {
-      this.moveBackward = this.requireStopMoveBackward = false;
-    }
-    if (this.requireStopStrafeLeft) {
-      this.strafeLeft = this.requireStopStrafeLeft = false;
-    }
-    if (this.requireStopStrafeRight) {
-      this.strafeRight = this.requireStopStrafeRight = false;
-    }
-    if (!this.moveForward && !this.moveBackward && !this.strafeLeft && !this.strafeRight) {
-      this.moving = false;
-    }
-
   }
 
   beginJump() {
-    console.log("Begin player jump");
     this.jumping = true;
-    this.jumpTakeOffFrames = this.TAKE_OFF_FRAMES;
-    this.onAir = true;
-    this.jumpVector = this.getCurrentMoveVector(this.body.container, this.gravity, this.speed);
-
-    let jumpAnimation = new BABYLON.Animation(
-      "jump",
-      "position.y",
-      20,
-      BABYLON.Animation.ANIMATIONTYPE_FLOAT,
-      BABYLON.Animation.ANIMATIONLOOPMODE_CYCLE);
-    jumpAnimation.setKeys([
-      { frame: 0, value: this.body.container.position.y },
-      { frame: 8, value: this.body.container.position.y + 9 },
-      { frame: 10, value: this.body.container.position.y + 10 },
-     // { frame: 12, value: this.body.container.position.y + 9 },
-     // { frame: 20, value: this.body.container.position.y }
-    ]);
-    this.body.container.animations.push(jumpAnimation);
-    this.game.scene.beginAnimation(this.body.container, 0, 10, false, 1, this.endJump.bind(this));
+    this.body.container.impostor.applyImpulse(new BABYLON.Vector3(0, 3000, 0), this.body.container.getAbsolutePosition());
     this.game.sounds.jump.play();
-  }
-
-  endJump() {
-
   }
 
   createBody(game) {
     console.log("Initializing player body...");
     this.body.meshes = game.meshes.player;
-    //this.body.container = game.meshes.player[0];
-    //this.body.container = new BABYLON.Mesh("container", game.scene);
     this.body.container = new BABYLON.MeshBuilder.CreateBox("box", {
       height: 10,
       width: 3,
       depth: 2,
     }, game.scene);
     this.body.container.position = new BABYLON.Vector3(4, 50, 4);
-    this.body.container.checkCollisions = true;
-    this.body.container.ellipsoid = new BABYLON.Vector3(0.5, 4.9, 0.5);
+    this.body.container.ellipsoid = new BABYLON.Vector3(3, 5, 3);
     this.body.container.material = new BABYLON.StandardMaterial("mat", game.scene);
     this.body.container.material.alpha = 0;
-
-    //this.body.container.ellipsoidOffset = new BABYLON.Vector3(0, 2, 0);
-    //this.body.container.applyGravity = true;
-
     this.body.meshes[0].scaling = new BABYLON.Vector3(0.14, 0.14, 0.14);
     this.body.meshes[0].parent = this.body.container;
     this.body.meshes[0].position.y = -10 / 2;
-
     var animation = game.scene.beginAnimation(game.skeletons.player[0], 0, 100, true, 1.0);
 
+    this.body.container.impostor = new BABYLON.PhysicsImpostor(this.body.container,
+      BABYLON.PhysicsImpostor.BoxImpostor, {
+        mass: 100,
+        friction: 0,
+        restitution: 0,
+        disableBidirectionalTransformation: true
+      }, game.scene);
 
-    this.body.container.actionManager = new BABYLON.ActionManager(game.scene);
+    let self = this;
+    this.body.container.impostor.registerOnPhysicsCollide(
+      game.scene.getMeshByName("ground").impostor,
+      function(main, collided) {
+        if (self.ignoredSuccessiveGroundCollision === 0) {
+          self.ignoredSuccessiveGroundCollision = self.IGNORE_SUCCESSIVE_GROUND_COLLISION_FRAME;
+          console.log("COLLISION PLAYER ON GROUND");
+          self.landing();
+        } else {
+          self.ignoredSuccessiveGroundCollision--;
+        }
 
-    this.body.container.actionManager.registerAction(
-      new BABYLON.ExecuteCodeAction({
-          trigger: BABYLON.ActionManager.OnIntersectionEnterTrigger,
-          parameter: game.scene.getMeshByName("box")
-        }, this.landing.bind(this)
-      )
-    );
+    });
 
-
+    this.body.container.impostor.executeNativeFunction(function (world, body) {
+      body.fixedRotation = true;
+      body.updateMassProperties();
+    });
 
   }
 
@@ -245,7 +194,8 @@ export default class Player {
 
     target.y += 1;
     cam = new BABYLON.FreeCamera("camera", BABYLON.Vector3.Zero(), game.scene);
-    cam.position.y = 5;
+
+
     //cam.parent = this.body.container;
     cam.inputs.removeByType("FreeCameraKeyboardMoveInput");
     //cam.checkCollisions = true;
@@ -256,6 +206,11 @@ export default class Player {
     // cam.keysLeft.push(81);
     // cam.keysRight.push(68);
     cam.position = this.startingPosition;
+
+    cam.inertia = 0.2;
+    cam.angularSensibility = 1000;
+
+
     cam.attachControl(game.canvas, true);
     this.camera.firstPersonCamera = cam;
 
@@ -264,7 +219,8 @@ export default class Player {
     //cam = new BABYLON.ArcRotateCamera("camera", 0, 1, 25, this.body[0], game.scene);
     cam = new BABYLON.ArcRotateCamera("camera", 0, 1, 20, this.body.container, game.scene);
     //cam.setPosition(new BABYLON.Vector3(4, 55, 4));
-
+    cam.inertia = 0.2;
+    cam.angularSensibility = 1000;
     cam.attachControl(game.canvas, true);
     // cam.maxZ = 5000;
     // cam.lowerRadiusLimit = 120;
@@ -382,32 +338,16 @@ export default class Player {
     let kb = this.game.gameMod.keyBindings;
     switch(event.keyCode){
       case kb.forward:
-        if (this.jumping) {
-          this.requireStopMoveForward = true;
-        } else {
-          this.moveForward = false;
-        }
+        this.moveForward = false;
         break;
       case kb.backward:
-        if (this.jumping) {
-          this.requireStopMoveBackward = true;
-        } else {
-          this.moveBackward = false;
-        }
+        this.moveBackward = false;
         break;
       case kb.left:
-        if (this.jumping) {
-          this.requireStopStrafeLeft = true;
-        } else {
-          this.strafeLeft = false;
-        }
+        this.strafeLeft = false;
         break;
       case kb.right:
-        if (this.jumping) {
-          this.requireStopStrafeRight = true;
-        } else {
-          this.strafeRight = false;
-        }
+        this.strafeRight = false;
         break;
     }
     if (!this.moveForward && !this.moveBackward && !this.strafeLeft && !this.strafeRight) {
@@ -431,17 +371,19 @@ export default class Player {
 // }
 
 
-// DISABLE PHYSIC ENGINE FOR PLAYER
-// this.body.container.impostor = new BABYLON.PhysicsImpostor(this.body.container,
-//   BABYLON.PhysicsImpostor.BoxImpostor, {
-//     mass: 100,
-//     friction: 0,
-//     restitution: 0,
-//     disableBidirectionalTransformation: true
-//   }, game.scene);
-// let ground = game.scene.getMeshByName("ground");
-// this.body.container.impostor.registerOnPhysicsCollide(ground.physicsImpostor, function(main, collided) {
-//   //main.object.material.diffuseColor = new BABYLON.Color3(Math.random(), Math.random(), Math.random());
-//   console.log("COLLISION PLAYER ON GROUND !!!!!!!!!!!!");
-//   this.jumping = false;
-// });
+
+
+//this.body.container.actionManager = new BABYLON.ActionManager(game.scene);
+
+// this.body.container.actionManager.registerAction(
+//   new BABYLON.ExecuteCodeAction({
+//       trigger: BABYLON.ActionManager.OnIntersectionEnterTrigger,
+//       parameter: game.scene.getMeshByName("box")
+//     }, this.landing.bind(this))
+// );
+// this.body.container.actionManager.registerAction(
+//   new BABYLON.ExecuteCodeAction({
+//       trigger: BABYLON.ActionManager.OnIntersectionEnterTrigger,
+//       parameter: game.scene.getMeshByName("ground")
+//     }, this.landing.bind(this))
+// );
