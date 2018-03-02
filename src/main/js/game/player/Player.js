@@ -2,6 +2,11 @@ import * as BABYLON from 'babylonjs';
 
 import Hammer from "game/weapons/Hammer";
 
+function vecToLocal(vector, mesh){
+  var m = mesh.getWorldMatrix();
+  var v = BABYLON.Vector3.TransformCoordinates(vector, m);
+  return v;
+}
 
 
 let CameraType = {
@@ -10,10 +15,12 @@ let CameraType = {
   THIRD_PERSON : 1
 };
 
+let EPSILON = 0.01;
+
 export default class Player {
 
   // Ignore x successive collisions on ground (bounces)
-  IGNORE_SUCCESSIVE_GROUND_COLLISION_FRAME = 3;
+  IGNORE_SUCCESSIVE_GROUND_COLLISION_FRAME = 5;
 
   game = null;
   moveForward = false;
@@ -24,7 +31,9 @@ export default class Player {
   jumping = false;
   isMouseDown = false;
   speed = 50;
-  ignoredSuccessiveGroundCollision = 0;
+
+  ignoreGroundCollisionTime = 400;
+  ignoreGroundCollision = false;
 
   startingPosition = new BABYLON.Vector3(0, 40, 0);
 
@@ -37,8 +46,10 @@ export default class Player {
   };
 
   body = {
+    height: 10,
+    container : null,
     meshes : null,
-    container : null
+    feetRay: null
   };
 
   weapon = null;
@@ -104,6 +115,18 @@ export default class Player {
       // Just apply gravity
       body.impostor.setLinearVelocity(new BABYLON.Vector3(0, body.impostor.getLinearVelocity().y, 0));
     }
+
+    // if (Math.abs(this.body.previousY - this.body.container.position.y) > EPSILON) {
+    //   this.checkFeetRayCollision();
+    // } else {
+    //   console.log("this.body.previousY : ", this.body.previousY);
+    //   console.log("this.body.container.position.y : ", this.body.container.position.y);
+    // }
+    // if (body.impostor.getLinearVelocity().y > EPSILON) {
+    //   this.checkFeetRayCollision();
+    // }
+
+    //console.log("body.impostor.getLinearVelocity().y: "  + body.impostor.getLinearVelocity().y);
   }
 
   getCurrentMoveVector(body, gravity, speed) {
@@ -146,17 +169,16 @@ export default class Player {
     console.log("Initializing player body...");
     this.body.meshes = game.meshes.player;
     this.body.container = new BABYLON.MeshBuilder.CreateBox("box", {
-      height: 10,
+      height: this.body.height,
       width: 3,
       depth: 2,
     }, game.scene);
-    this.body.container.position = new BABYLON.Vector3(4, 50, 4);
-    this.body.container.ellipsoid = new BABYLON.Vector3(3, 5, 3);
+    this.body.container.position = new BABYLON.Vector3(4, 10, 4);
     this.body.container.material = new BABYLON.StandardMaterial("mat", game.scene);
-    this.body.container.material.alpha = 0;
+    this.body.container.material.alpha = 0.5;
     this.body.meshes[0].scaling = new BABYLON.Vector3(0.14, 0.14, 0.14);
     this.body.meshes[0].parent = this.body.container;
-    this.body.meshes[0].position.y = -10 / 2;
+    this.body.meshes[0].position.y = -this.body.height / 2;
     var animation = game.scene.beginAnimation(game.skeletons.player[0], 0, 100, true, 1.0);
 
     this.body.container.impostor = new BABYLON.PhysicsImpostor(this.body.container,
@@ -167,26 +189,98 @@ export default class Player {
         disableBidirectionalTransformation: true
       }, game.scene);
 
-    let self = this;
-    this.body.container.impostor.registerOnPhysicsCollide(
-      game.scene.getMeshByName("ground").impostor,
-      function(main, collided) {
-        if (self.ignoredSuccessiveGroundCollision === 0) {
-          self.ignoredSuccessiveGroundCollision = self.IGNORE_SUCCESSIVE_GROUND_COLLISION_FRAME;
-          console.log("COLLISION PLAYER ON GROUND");
-          self.landing();
-        } else {
-          self.ignoredSuccessiveGroundCollision--;
-        }
+    for (let i = 0; i < game.physicsImpostors.length; i++) {
+      this.body.container.impostor.registerOnPhysicsCollide(
+        game.physicsImpostors[i], this.checkFeetRayCollision.bind(this));
+    }
 
-    });
 
     this.body.container.impostor.executeNativeFunction(function (world, body) {
       body.fixedRotation = true;
       body.updateMassProperties();
     });
 
+    this.createFeetRay();
+
+
+    // var origin = new BABYLON.Vector3 ( 0.0, 0.0, 0.0 );
+    // var localMeshDirection = new BABYLON.Vector3(1, 0, 0);
+    // var length = 20;
+
+    //var ray = new BABYLON.Ray(origin, localMeshDirection, length);
+    // var ray = new BABYLON.Ray();
+    // var rayHelper = new BABYLON.RayHelper(ray);
+    // rayHelper.attachToMesh(this.body.container, localMeshDirection, origin, length);
+    // rayHelper.show(this.game.scene, new BABYLON.Color3(1, 0.1, 0.1));
+
+    //var ray = new BABYLON.Ray(origin, localMeshDirection, length);
+    //BABYLON.RayHelper.CreateAndShow(ray, this.game.scene, new BABYLON.Color3(1, 1, 0.1));
+    //var rayHelper = new BABYLON.RayHelper(ray);
+    //rayHelper.attachToMesh(this.body.container, localMeshDirection, origin, length);
+
+    //var localMeshOrigin = this.body.container.position;
+    //var ray = new BABYLON.Ray(localMeshOrigin, localMeshDirection, length);
+    //var rayHelper = new BABYLON.RayHelper(ray);
+
+    //
+
+    //rayHelper.show(this.game.scene, new BABYLON.Color3(1, 0.1, 0.1));
+
+
+
   }
+
+  /**
+   * The ray starts from "inside" the body of 0.1, is very shord (0.1) and
+   * create an event when hitting anything.
+   */
+  createFeetRay() {
+
+    let startingYPostion = -this.body.height / 2 + 0.5;
+    this.body.feetRay = new BABYLON.Ray();
+    let frontHelper = new BABYLON.RayHelper(this.body.feetRay);
+    let frontLocalMeshDirection = new BABYLON.Vector3(0, -1, 0);
+    let frontLocalMeshOrigin = new BABYLON.Vector3(0, startingYPostion, 0);
+    let frontLength = 2;
+    frontHelper.attachToMesh(this.body.container, frontLocalMeshDirection, frontLocalMeshOrigin, frontLength);
+    frontHelper.show(this.game.scene, new BABYLON.Color3(1, 1, 1));
+  }
+
+  checkFeetRayCollision(main, collided) {
+    //console.log("collision from physic (counter : " + this.ignoreGroundCollision);
+    var hitInfo = this.body.feetRay.intersectsMeshes([
+      //this.game.scene.getMeshByName("ground")
+      collided.object
+    ]);
+    if (hitInfo.length) {
+      if (!this.ignoreGroundCollision) {
+        this.ignoreGroundCollision = true;
+        //console.log("COLLISION PLAYER ON GROUND, collided : ", collided);
+        this.landing();
+        var self = this;
+        setTimeout(() => { self.ignoreGroundCollision = false }, self.ignoreGroundCollisionTime);
+      }
+    }
+  }
+
+
+
+  castRay2() {
+    let origin = this.body.container.position;
+    let forward = new BABYLON.Vector3(0,0,1);
+    forward = vecToLocal(forward, this.body.container);
+    let direction = forward.subtract(origin);
+    direction = BABYLON.Vector3.Normalize(direction);
+    let length = 100;
+    let ray = new BABYLON.Ray(origin, direction, length);
+    let rayHelper = new BABYLON.RayHelper(ray);
+    rayHelper.show(this.game.scene, new BABYLON.Color3(0.8, 0.1, 0.1));
+  }
+
+
+
+
+
 
   createCameras(game) {
     let cam;
@@ -283,7 +377,7 @@ export default class Player {
     //this.game.scene.beginAnimation(this.weapon, 0, 100, false, 10, null);
 
 
-    // var pickedInfo = window.scene.pick(window.innerWidth * 0.5, window.innerHeight * 0.5, null, false);
+    // let pickedInfo = window.scene.pick(window.innerWidth * 0.5, window.innerHeight * 0.5, null, false);
     //
     // if (pickedInfo.pickedMesh && pickedInfo.pickedMesh.name) {
     //   if (pickedInfo.pickedMesh.name.indexOf("enemy") != -1) {

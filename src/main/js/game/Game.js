@@ -31,6 +31,8 @@ export default class Game {
   // Loaded after assets
   player = null;
 
+  physicsImpostors = [];
+
   constructor(canvas, gameMod, gameMap, scene) {
     this.canvas = canvas;
     this.gameMod = gameMod;

@@ -33,7 +33,7 @@ class GameLoader {
     this.createLights(game.scene);
     this.createSkyBox(game.scene);
     this.createGround(game);
-    this.addSamples(game.scene);
+    this.addSamples(game);
     console.log("Scene populated successfully");
 
     game.gameMenu = new GameMenu(game.scene, () => {
@@ -106,7 +106,7 @@ class GameLoader {
     ground.material.diffuseTexture = texture;
     ground.position.y = -1;
     ground.receiveShadows = true;
-    ground.impostor = new BABYLON.PhysicsImpostor(
+    ground.physicsImpostor = new BABYLON.PhysicsImpostor(
       ground,
       BABYLON.PhysicsImpostor.BoxImpostor, {
         mass: 0,
@@ -114,6 +114,9 @@ class GameLoader {
         restitution: 0, // 0 = no bounce, max 1
         disableBidirectionalTransformation: true
       }, scene);
+
+    game.physicsImpostors.push(ground.physicsImpostor);
+
     // let groundMaterial = new BABYLON.StandardMaterial("ground", scene);
     // groundMaterial.diffuseTexture = new BABYLON.Texture("maps/arena/ground.png", scene);
     // groundMaterial.diffuseTexture.uScale = 6;
@@ -135,8 +138,8 @@ class GameLoader {
 
   }
 
-  addSamples(scene) {
-
+  addSamples(game) {
+    let scene = game.scene;
     // WALL
     let wall = new BABYLON.MeshBuilder.CreateBox("wall", {
       height: 10,
@@ -144,15 +147,13 @@ class GameLoader {
       dept: 5
     }, scene);
     wall.checkCollisions = true;
-    wall.position = new BABYLON.Vector3(3, 0, 5);
+    wall.position = new BABYLON.Vector3(100, 0, 5);
 
     // SPHERE
     var sphere = BABYLON.MeshBuilder.CreateSphere("sphere", {
       diameter: 2,
       diameterX: 3}, scene);
-    sphere.checkCollisions = true;
-    sphere.ellipsoid = new BABYLON.Vector3(0.5, 1, 0.5);
-    sphere.position = new BABYLON.Vector3(-2, 30, 5);
+    sphere.position = new BABYLON.Vector3(-100, 30, 5);
     sphere.material = new BABYLON.StandardMaterial("blueMat", scene);
     sphere.material.ambientColor = new BABYLON.Color3(0, 0, 1);
     sphere.physicsImpostor = new BABYLON.PhysicsImpostor(sphere,
@@ -170,15 +171,13 @@ class GameLoader {
     box.material.ambientColor = new BABYLON.Color3(1, 0, 0);
     box.rotation.x = -0.2;
     box.rotation.y = -0.4;
-    box.checkCollisions = true;
-    box.position= new BABYLON.Vector3(5, 0, 0);
-    //box.ellipsoid = new BABYLON.Vector3(0, 1, 0);
+    box.position= new BABYLON.Vector3(5, 0, 100);
     box.physicsImpostor = new BABYLON.PhysicsImpostor(box,
       BABYLON.PhysicsImpostor.BoxImpostor, {
         mass: 0,
         friction: 1,
         restitution: 0
-      }, scene)
+      }, scene);
 
     // BOX
     let box2 = new BABYLON.MeshBuilder.CreateBox("box2", {
@@ -187,9 +186,9 @@ class GameLoader {
       depth: 50
     }, scene);
     box2.material = new BABYLON.StandardMaterial("redMat", scene);
-    box2.material.ambientColor = new BABYLON.Color3(1, 0, 0);
+    box2.material.ambientColor = new BABYLON.Color3(1, 0, 20);
     box2.checkCollisions = true;
-    box2.position= new BABYLON.Vector3(20, 0, 0);
+    box2.position= new BABYLON.Vector3(100, 0, 50);
     //box.ellipsoid = new BABYLON.Vector3(0, 1, 0);
     box2.physicsImpostor = new BABYLON.PhysicsImpostor(box2,
       BABYLON.PhysicsImpostor.BoxImpostor, {
@@ -197,6 +196,10 @@ class GameLoader {
         friction: 1,
         restitution: 0
       }, scene);
+
+    game.physicsImpostors.push(sphere.physicsImpostor);
+    game.physicsImpostors.push(box.physicsImpostor);
+    game.physicsImpostors.push(box2.physicsImpostor);
   }
 
 

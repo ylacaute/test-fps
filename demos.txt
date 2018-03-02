@@ -113,3 +113,7 @@ http://www.babylonjs-playground.com/#WCDZS#19
 
 // Camera (basic)
 http://www.babylonjs-playground.com/#1SGRQM
+
+
+// RAY TESTS
+http://playground.babylonjs.com/#LDQ7WA#1
