@@ -13,8 +13,9 @@ export default class Skins {
     rotation: [-Math.PI / 2, 0, 0],
     model: "ely.babylon",
     animation: {
+      waitFrames: [30, 30],
       walkFrames: [0, 25],
-      jumpFrames: [31, 51]
+      jumpFrames: [31, 38]
     },
     sounds: [{
       name: "jump",

@@ -22,15 +22,20 @@ let PhysicState = {
   JUMPING: 2
 };
 
+let PhysicEvent = {
+  REQUEST_START_MOVE: 0,
+  REQUEST_STOP_MOVE: 1,
+  REQUEST_START_JUMP: 2,
+  REQUEST_STOP_JUMP: 3,
+  REQUEST_START_WAIT: 4
+};
+
+
 let EPSILON = 0.01;
 
 export default class Player {
 
-  config: null;
-
-  // Ignore x successive collisions on ground (bounces)
-  IGNORE_SUCCESSIVE_GROUND_COLLISION_FRAME = 5;
-
+  config = null;
   game = null;
   moveForward = false;
   moveBackward = false;
@@ -38,8 +43,21 @@ export default class Player {
   strafeRight = false;
   moving = false;
   jumping = false;
+
+
+  // Better gamePlay
+  jumpRequestTimestamp = 0;
+  jumpRequestMaxDelay = 100; // ms
+
+
   isMouseDown = false;
-  speed = 50;
+
+  acceleration = 0.8;
+  deceleration = 2;
+  maxSpeed = 100;
+  maxWalkSpeed = 50;
+  minSpeed = 20;
+  speed = this.minSpeed;
 
   ignoreGroundCollisionTime = 400;
   ignoreGroundCollision = false;
@@ -62,12 +80,12 @@ export default class Player {
   };
 
   animation = {
+    wait: null,
     walk: null,
     jump: null
   };
 
   physicState = null;
-
   weapon = null;
 
   constructor(game) {
@@ -87,8 +105,6 @@ export default class Player {
   startPlaying() {
     this.setCameraType(CameraType.THIRD_PERSON);
     //this.weapon.enabled = true;
-    //let skeletons = this.game.skeletons.player;
-    //var animation = this.game.scene.beginAnimation(skeletons[0], 0, 100, true, 1.0);
   }
 
   stopPlaying() {
@@ -117,33 +133,40 @@ export default class Player {
 
   beforeRender() {
     this.updateCamera();
-
     let body = this.body.container;
 
+    // TMP
     if (body.intersectsMesh(this.game.scene.getMeshByName("box2"), true)) {
       this.game.scene.getMeshByName("box2").material.diffuseColor = new BABYLON.Color3(Math.random(), Math.random(), Math.random());
     }
+
     if (this.jumping) {
-      // Jumping, can't change movement
+      // Can't change movement by apply accel to finish at maxSpeed when keep jumping and moving
+      if (this.moving) {
+        if (this.speed < this.maxSpeed) {
+          this.speed += this.acceleration;
+        }
+      }
     } else if (this.moving) {
+      // Apply accel/decel to finish at maxWalkSpeed when keep walking
+      if (this.speed < this.maxWalkSpeed) {
+        this.speed += this.acceleration;
+      }
+      if (this.speed > this.maxWalkSpeed) {
+        this.speed -= this.deceleration;
+      }
       // Moving and apply gravity
       body.impostor.setLinearVelocity(this.getCurrentMoveVector(body, this.gravity, this.speed));
     } else {
-      // Just apply gravity
+      // Just apply gravity and deceleration
       body.impostor.setLinearVelocity(new BABYLON.Vector3(0, body.impostor.getLinearVelocity().y, 0));
+      if (this.speed > this.minSpeed) {
+        this.speed -= this.deceleration;
+        if (this.speed < this.minSpeed) {
+          this.speed = this.minSpeed;
+        }
+      }
     }
-
-    // if (Math.abs(this.body.previousY - this.body.container.position.y) > EPSILON) {
-    //   this.checkFeetRayCollision();
-    // } else {
-    //   console.log("this.body.previousY : ", this.body.previousY);
-    //   console.log("this.body.container.position.y : ", this.body.container.position.y);
-    // }
-    // if (body.impostor.getLinearVelocity().y > EPSILON) {
-    //   this.checkFeetRayCollision();
-    // }
-
-    //console.log("body.impostor.getLinearVelocity().y: "  + body.impostor.getLinearVelocity().y);
   }
 
   getCurrentMoveVector(body, gravity, speed) {
@@ -170,45 +193,14 @@ export default class Player {
     return new BABYLON.Vector3(xDir, gravity, zDir);
   }
 
-  landing() {
-    this.game.sounds.land.play();
-    if (this.jumping) {
-      this.body.meshes[0].position.y += 0;
-    }
-    this.jumping = false;
-    //this.game.scene.stopAnimation(this.body.container);
-    this.stopJumpAnimation();
-    if (this.moving) {
-      this.startWalkAnimation();
-    }
-
+  startWaiting() {
+    console.log("startWaiting");
+    let frames = this.config.skin.animation.waitFrames;
+    this.animation.wait = this.game.scene.beginAnimation(this.body.skeletons[0], frames[0], frames[1], false, 1.0);
   }
 
-  beginJump() {
-    this.jumping = true;
-    this.body.container.impostor.applyImpulse(new BABYLON.Vector3(0, 2500, 0), this.body.container.getAbsolutePosition());
-    this.game.sounds.jump.play();
-    this.stopWalkAnimation();
-    this.startJumpAnimation();
-    this.body.meshes[0].position.y -= 0;
-    //this.animation.jump.restart();
-  }
-
-  setMoving(value) {
-    if (this.moving && !value) {
-      //this.game.scene.stopAnimation(this.body.container);
-      this.pauseWalkAnimation();
-      console.log("STOP MOVING");
-    } else if (!this.moving && value) {
-//      this.startWalkAnimation(this.game);
-      //this.animation.walk.restart();
-      this.startWalkAnimation();
-      console.log("START MOVING");
-    }
-    this.moving = value;
-  }
-
-  startWalkAnimation() {
+  startWalking() {
+    console.log("startWalking");
     if (!this.animation.walk) {
       let frames = this.config.skin.animation.walkFrames;
       this.animation.walk = this.game.scene.beginAnimation(this.body.skeletons[0], frames[0], frames[1], true, 1.0);
@@ -217,27 +209,35 @@ export default class Player {
     }
   }
 
-  stopWalkAnimation() {
-    this.animation.walk = null;
-  }
-
-  pauseWalkAnimation() {
+  stopWalking() {
+    console.log("stopWalking");
     if (this.animation.walk) {
       this.animation.walk.pause();
     }
   }
 
-  startJumpAnimation() {
-    this.animation.jump = this.game.scene.beginAnimation(this.body.skeletons[0], frames[0], frames[1], false, 0.7);
-    // if (!this.animation.jump) {
-    //   let frames = this.config.skin.animation.jumpFrames;
-    //   this.animation.jump = this.game.scene.beginAnimation(this.body.skeletons[0], frames[0], frames[1], false, 1.0);
-    // } else {
-    //   this.animation.jump.restart();
-    // }
+  startJumping() {
+    console.log("startJumping");
+    this.animation.walk = null;
+    this.body.container.impostor.applyImpulse(new BABYLON.Vector3(0, 2500, 0), this.body.container.getAbsolutePosition());
+    this.game.sounds.jump.play();
+    let frames = this.config.skin.animation.jumpFrames;
+    this.animation.jump = this.game.scene.beginAnimation(this.body.skeletons[0], frames[0], frames[1], false, 1.0);
   }
 
-  stopJumpAnimation() {
+  landing() {
+    console.log("landing");
+    this.game.sounds.land.play();
+    if (this.moving) {
+      this.startWalking();
+    }
+    if (this.jumping) {
+      this.onPhysicEvent(PhysicEvent.REQUEST_STOP_JUMP);
+    }
+  }
+
+  stopJumping() {
+    console.log("stopJumping");
     if (this.animation.jump) {
       this.animation.jump.pause();
     }
@@ -255,7 +255,7 @@ export default class Player {
     }, game.scene);
     this.body.container.position = new BABYLON.Vector3(0, 10, 0);
     this.body.container.material = new BABYLON.StandardMaterial("mat", game.scene);
-    this.body.container.material.alpha = 0.5;
+    this.body.container.material.alpha = game.config.core.debug ? 0.5 : 0;
     this.body.meshes[0].scaling = new BABYLON.Vector3(skin.scale[0], skin.scale[1], skin.scale[2]);
     this.body.meshes[0].parent = this.body.container;
     this.body.meshes[0].rotation.x = skin.rotation[0];
@@ -263,16 +263,6 @@ export default class Player {
     this.body.meshes[0].rotation.z = skin.rotation[2];
     this.body.meshes[0].position.y = this.body.height / 2;
     this.body.meshes[0].position.y = -this.body.height / 2;
-
-
-
-    //this.animation.walk = this.body.skeletons[0].beginAnimation("walk", true, 1.0);
-    //this.animation.walk = game.scene.beginAnimation(this.body.skeletons[0], frames[0], frames[1], true, 1.0);
-
-    frames = this.config.skin.animation.jumpFrames;
-    //this.animation.jump = game.scene.beginAnimation(this.body.skeletons[0], frames[0], frames[1], false, 0.5);
-    //this.animation.jump.pause();
-
     this.body.container.impostor = new BABYLON.PhysicsImpostor(this.body.container,
       BABYLON.PhysicsImpostor.BoxImpostor, {
         mass: 100,
@@ -280,32 +270,61 @@ export default class Player {
         restitution: 0,
         disableBidirectionalTransformation: true
       }, game.scene);
-
     for (let i = 0; i < game.physicsImpostors.length; i++) {
       this.body.container.impostor.registerOnPhysicsCollide(
         game.physicsImpostors[i], this.checkFeetRayCollision.bind(this));
     }
-
     // Avoid rotation on the Y axis
     this.body.container.impostor.executeNativeFunction(function (world, body) {
       body.fixedRotation = true;
       body.updateMassProperties();
     });
-    this.createFeetRay();
-
-    this.setPhysicState(PhysicState.WAITING);
+    this.createFeetRay(game);
+    this.onPhysicEvent(PhysicEvent.REQUEST_START_WAIT);
   }
 
-  setPhysicState(physicState) {
-    switch (physicState) {
-      case PhysicState.WAITING:
-
+  onPhysicEvent(physicEvent) {
+    switch (physicEvent) {
+      case PhysicEvent.REQUEST_START_WAIT:
+        this.startWaiting();
+        this.speed = this.minSpeed;
         break;
-      case PhysicState.MOVING:
-
+      case PhysicEvent.REQUEST_START_MOVE:
+        if (!this.jumping) {
+          this.startWalking();
+        }
+        this.moving = true;
         break;
-      case PhysicState.JUMPING:
-
+      case PhysicEvent.REQUEST_STOP_MOVE:
+        if (!this.jumping) {
+          this.stopWalking();
+        }
+        this.moving = false;
+        break;
+      case PhysicEvent.REQUEST_START_JUMP:
+        if (!this.jumping) {
+          this.startJumping();
+        } else {
+          // We "may" accept jump input even a fraction of second too early for better game play
+          this.jumpRequestTimestamp = Date.now();
+        }
+        this.jumping = true;
+        break;
+      case PhysicEvent.REQUEST_STOP_JUMP:
+        if (Date.now() - this.jumpRequestTimestamp <= this.jumpRequestMaxDelay) {
+          let self = this;
+          setTimeout(() => {
+            self.startJumping();
+            self.jumping = true;
+          }, 50);
+        } else {
+          this.jumping = false;
+          this.stopJumping();
+          if (!this.moving) {
+            this.onPhysicEvent(PhysicEvent.REQUEST_START_WAIT);
+          }
+        }
+        this.jumpRequestTimestamp = 0;
         break;
     }
   }
@@ -314,7 +333,7 @@ export default class Player {
    * The ray starts from "inside" the body of 0.1, is very shord (0.1) and
    * create an event when hitting anything.
    */
-  createFeetRay() {
+  createFeetRay(game) {
     let startingYPostion = -this.body.height / 2 + 0.5;
     this.body.feetRay = new BABYLON.Ray();
     let frontHelper = new BABYLON.RayHelper(this.body.feetRay);
@@ -322,7 +341,9 @@ export default class Player {
     let frontLocalMeshOrigin = new BABYLON.Vector3(0, startingYPostion, 0);
     let frontLength = 2;
     frontHelper.attachToMesh(this.body.container, frontLocalMeshDirection, frontLocalMeshOrigin, frontLength);
-    frontHelper.show(this.game.scene, new BABYLON.Color3(1, 1, 1));
+    if (game.config.core.debug) {
+      frontHelper.show(this.game.scene, new BABYLON.Color3(1, 1, 1));
+    }
   }
 
   checkFeetRayCollision(main, collided) {
@@ -425,44 +446,35 @@ export default class Player {
 
   onKeyDown(event) {
     //console.log("KeyDown : " + event.keyCode);
+    let wasMoving = this.moving;
     let kb = this.config.keyBindings;
     switch(event.keyCode){
       case kb.jump:
-        if (!this.jumping) {
-          this.beginJump();
-        }
+        this.onPhysicEvent(PhysicEvent.REQUEST_START_JUMP);
         break;
       case kb.forward:
-        if (!this.jumping) {
-          this.moveForward = true;
-          this.setMoving(true);
-        }
+        this.moveForward = true;
         break;
       case kb.backward:
-        if (!this.jumping) {
-          this.moveBackward = true;
-          this.setMoving(true);
-        }
+        this.moveBackward = true;
         break;
       case kb.left:
-        if (!this.jumping) {
-          this.strafeLeft = true;
-          this.setMoving(true);
-        }
+        this.strafeLeft = true;
         break;
       case kb.right:
-        if (!this.jumping) {
-          this.strafeRight = true;
-          this.setMoving(true);
-        }
+        this.strafeRight = true;
         break;
       case kb.switchCamera:
         this.switchCameraType();
         break;
     }
+    if (wasMoving !== (this.moveForward || this.moveBackward || this.strafeLeft || this.strafeRight)) {
+      this.onPhysicEvent(PhysicEvent.REQUEST_START_MOVE);
+    }
   }
 
   onKeyUp(event) {
+    let wasMoving = this.moving;
     let kb = this.config.keyBindings;
     switch(event.keyCode){
       case kb.forward:
@@ -478,8 +490,8 @@ export default class Player {
         this.strafeRight = false;
         break;
     }
-    if (!this.moveForward && !this.moveBackward && !this.strafeLeft && !this.strafeRight) {
-      this.setMoving(false);
+    if (wasMoving !== (this.moveForward || this.moveBackward || this.strafeLeft || this.strafeRight)) {
+      this.onPhysicEvent(PhysicEvent.REQUEST_STOP_MOVE);
     }
   }
 
@@ -515,3 +527,17 @@ export default class Player {
 //       parameter: game.scene.getMeshByName("ground")
 //     }, this.landing.bind(this))
 // );
+
+// setPhysicState(physicState) {
+//   switch (physicState) {
+//     case PhysicState.WAITING:
+//
+//       break;
+//     case PhysicState.MOVING:
+//
+//       break;
+//     case PhysicState.JUMPING:
+//
+//       break;
+//   }
+// }

@@ -53,10 +53,6 @@ export default class Game {
     document.addEventListener("webkitpointerlockchange", this.pointerLockChange.bind(this), false);
   }
 
-  getConfig() {
-    return this.config.core;
-  }
-
   getPlayerConfig() {
     return this.config.player;
   }
