@@ -10,14 +10,23 @@ function vecToLocal(vector, mesh){
 
 
 let CameraType = {
-  UNSET : -1,
-  FIRST_PERSON : 0,
-  THIRD_PERSON : 1
+  UNSET: -1,
+  FIRST_PERSON: 0,
+  THIRD_PERSON: 1
+};
+
+
+let PhysicState = {
+  WAITING: 0,
+  MOVING: 1,
+  JUMPING: 2
 };
 
 let EPSILON = 0.01;
 
 export default class Player {
+
+  config: null;
 
   // Ignore x successive collisions on ground (bounces)
   IGNORE_SUCCESSIVE_GROUND_COLLISION_FRAME = 5;
@@ -52,11 +61,19 @@ export default class Player {
     feetRay: null
   };
 
+  animation = {
+    walk: null,
+    jump: null
+  };
+
+  physicState = null;
+
   weapon = null;
 
   constructor(game) {
     console.log("Creating player for " + game.gameMod.name);
     this.game = game;
+    this.config = game.getPlayerConfig();
     this.createBody(game);
     this.createCameras(game);
     //this.weapon = new Hammer(game, this.firstPersonCamera);
@@ -155,31 +172,106 @@ export default class Player {
 
   landing() {
     this.game.sounds.land.play();
+    if (this.jumping) {
+      this.body.meshes[0].position.y += 0;
+    }
     this.jumping = false;
-    this.game.scene.stopAnimation(this.body.container, "jump");
+    //this.game.scene.stopAnimation(this.body.container);
+    this.stopJumpAnimation();
+    if (this.moving) {
+      this.startWalkAnimation();
+    }
+
   }
 
   beginJump() {
     this.jumping = true;
-    this.body.container.impostor.applyImpulse(new BABYLON.Vector3(0, 3000, 0), this.body.container.getAbsolutePosition());
+    this.body.container.impostor.applyImpulse(new BABYLON.Vector3(0, 2500, 0), this.body.container.getAbsolutePosition());
     this.game.sounds.jump.play();
+    this.stopWalkAnimation();
+    this.startJumpAnimation();
+    this.body.meshes[0].position.y -= 0;
+    //this.animation.jump.restart();
+  }
+
+  setMoving(value) {
+    if (this.moving && !value) {
+      //this.game.scene.stopAnimation(this.body.container);
+      this.pauseWalkAnimation();
+      console.log("STOP MOVING");
+    } else if (!this.moving && value) {
+//      this.startWalkAnimation(this.game);
+      //this.animation.walk.restart();
+      this.startWalkAnimation();
+      console.log("START MOVING");
+    }
+    this.moving = value;
+  }
+
+  startWalkAnimation() {
+    if (!this.animation.walk) {
+      let frames = this.config.skin.animation.walkFrames;
+      this.animation.walk = this.game.scene.beginAnimation(this.body.skeletons[0], frames[0], frames[1], true, 1.0);
+    } else {
+      this.animation.walk.restart();
+    }
+  }
+
+  stopWalkAnimation() {
+    this.animation.walk = null;
+  }
+
+  pauseWalkAnimation() {
+    if (this.animation.walk) {
+      this.animation.walk.pause();
+    }
+  }
+
+  startJumpAnimation() {
+    this.animation.jump = this.game.scene.beginAnimation(this.body.skeletons[0], frames[0], frames[1], false, 0.7);
+    // if (!this.animation.jump) {
+    //   let frames = this.config.skin.animation.jumpFrames;
+    //   this.animation.jump = this.game.scene.beginAnimation(this.body.skeletons[0], frames[0], frames[1], false, 1.0);
+    // } else {
+    //   this.animation.jump.restart();
+    // }
+  }
+
+  stopJumpAnimation() {
+    if (this.animation.jump) {
+      this.animation.jump.pause();
+    }
   }
 
   createBody(game) {
     console.log("Initializing player body...");
-    this.body.meshes = game.meshes.player;
+    let skin = this.config.skin;
+    this.body.meshes = game.meshes[skin.name];
+    this.body.skeletons = game.skeletons[skin.name];
     this.body.container = new BABYLON.MeshBuilder.CreateBox("box", {
       height: this.body.height,
       width: 3,
       depth: 2,
     }, game.scene);
-    this.body.container.position = new BABYLON.Vector3(4, 10, 4);
+    this.body.container.position = new BABYLON.Vector3(0, 10, 0);
     this.body.container.material = new BABYLON.StandardMaterial("mat", game.scene);
     this.body.container.material.alpha = 0.5;
-    this.body.meshes[0].scaling = new BABYLON.Vector3(0.14, 0.14, 0.14);
+    this.body.meshes[0].scaling = new BABYLON.Vector3(skin.scale[0], skin.scale[1], skin.scale[2]);
     this.body.meshes[0].parent = this.body.container;
+    this.body.meshes[0].rotation.x = skin.rotation[0];
+    this.body.meshes[0].rotation.y = skin.rotation[1];
+    this.body.meshes[0].rotation.z = skin.rotation[2];
+    this.body.meshes[0].position.y = this.body.height / 2;
     this.body.meshes[0].position.y = -this.body.height / 2;
-    var animation = game.scene.beginAnimation(game.skeletons.player[0], 0, 100, true, 1.0);
+
+
+
+    //this.animation.walk = this.body.skeletons[0].beginAnimation("walk", true, 1.0);
+    //this.animation.walk = game.scene.beginAnimation(this.body.skeletons[0], frames[0], frames[1], true, 1.0);
+
+    frames = this.config.skin.animation.jumpFrames;
+    //this.animation.jump = game.scene.beginAnimation(this.body.skeletons[0], frames[0], frames[1], false, 0.5);
+    //this.animation.jump.pause();
 
     this.body.container.impostor = new BABYLON.PhysicsImpostor(this.body.container,
       BABYLON.PhysicsImpostor.BoxImpostor, {
@@ -194,40 +286,28 @@ export default class Player {
         game.physicsImpostors[i], this.checkFeetRayCollision.bind(this));
     }
 
-
+    // Avoid rotation on the Y axis
     this.body.container.impostor.executeNativeFunction(function (world, body) {
       body.fixedRotation = true;
       body.updateMassProperties();
     });
-
     this.createFeetRay();
 
+    this.setPhysicState(PhysicState.WAITING);
+  }
 
-    // var origin = new BABYLON.Vector3 ( 0.0, 0.0, 0.0 );
-    // var localMeshDirection = new BABYLON.Vector3(1, 0, 0);
-    // var length = 20;
+  setPhysicState(physicState) {
+    switch (physicState) {
+      case PhysicState.WAITING:
 
-    //var ray = new BABYLON.Ray(origin, localMeshDirection, length);
-    // var ray = new BABYLON.Ray();
-    // var rayHelper = new BABYLON.RayHelper(ray);
-    // rayHelper.attachToMesh(this.body.container, localMeshDirection, origin, length);
-    // rayHelper.show(this.game.scene, new BABYLON.Color3(1, 0.1, 0.1));
+        break;
+      case PhysicState.MOVING:
 
-    //var ray = new BABYLON.Ray(origin, localMeshDirection, length);
-    //BABYLON.RayHelper.CreateAndShow(ray, this.game.scene, new BABYLON.Color3(1, 1, 0.1));
-    //var rayHelper = new BABYLON.RayHelper(ray);
-    //rayHelper.attachToMesh(this.body.container, localMeshDirection, origin, length);
+        break;
+      case PhysicState.JUMPING:
 
-    //var localMeshOrigin = this.body.container.position;
-    //var ray = new BABYLON.Ray(localMeshOrigin, localMeshDirection, length);
-    //var rayHelper = new BABYLON.RayHelper(ray);
-
-    //
-
-    //rayHelper.show(this.game.scene, new BABYLON.Color3(1, 0.1, 0.1));
-
-
-
+        break;
+    }
   }
 
   /**
@@ -235,7 +315,6 @@ export default class Player {
    * create an event when hitting anything.
    */
   createFeetRay() {
-
     let startingYPostion = -this.body.height / 2 + 0.5;
     this.body.feetRay = new BABYLON.Ray();
     let frontHelper = new BABYLON.RayHelper(this.body.feetRay);
@@ -247,70 +326,32 @@ export default class Player {
   }
 
   checkFeetRayCollision(main, collided) {
-    //console.log("collision from physic (counter : " + this.ignoreGroundCollision);
-    var hitInfo = this.body.feetRay.intersectsMeshes([
-      //this.game.scene.getMeshByName("ground")
-      collided.object
-    ]);
+    let hitInfo = this.body.feetRay.intersectsMeshes([collided.object]);
     if (hitInfo.length) {
       if (!this.ignoreGroundCollision) {
         this.ignoreGroundCollision = true;
-        //console.log("COLLISION PLAYER ON GROUND, collided : ", collided);
         this.landing();
-        var self = this;
-        setTimeout(() => { self.ignoreGroundCollision = false }, self.ignoreGroundCollisionTime);
+        let self = this;
+        setTimeout(() => {
+          self.ignoreGroundCollision = false
+        }, self.ignoreGroundCollisionTime);
       }
     }
   }
 
-
-
-  castRay2() {
-    let origin = this.body.container.position;
-    let forward = new BABYLON.Vector3(0,0,1);
-    forward = vecToLocal(forward, this.body.container);
-    let direction = forward.subtract(origin);
-    direction = BABYLON.Vector3.Normalize(direction);
-    let length = 100;
-    let ray = new BABYLON.Ray(origin, direction, length);
-    let rayHelper = new BABYLON.RayHelper(ray);
-    rayHelper.show(this.game.scene, new BABYLON.Color3(0.8, 0.1, 0.1));
-  }
-
-
-
-
-
-
   createCameras(game) {
     let cam;
     let target = this.body.container.position.clone();
-
     target.y += 1;
     cam = new BABYLON.FreeCamera("camera", BABYLON.Vector3.Zero(), game.scene);
-
-
-    //cam.parent = this.body.container;
     cam.inputs.removeByType("FreeCameraKeyboardMoveInput");
-    //cam.checkCollisions = true;
-    ///cam.applyGravity = true;
-    //cam.ellipsoid = new BABYLON.Vector3(1, 2, 1);
-    // cam.keysUp.push(90);
-    // cam.keysDown.push(83);
-    // cam.keysLeft.push(81);
-    // cam.keysRight.push(68);
     cam.position = this.startingPosition;
-
     cam.inertia = 0.2;
     cam.angularSensibility = 1000;
-
-
+    //cam.fov = 90.00 * (Math.PI / 180);
     cam.attachControl(game.canvas, true);
     this.camera.firstPersonCamera = cam;
 
-    //.getRenderingCanvas()
-
-    //cam = new BABYLON.ArcRotateCamera("camera", 0, 1, 25, this.body[0], game.scene);
     cam = new BABYLON.ArcRotateCamera("camera", 0, 1, 20, this.body.container, game.scene);
     //cam.setPosition(new BABYLON.Vector3(4, 55, 4));
     cam.inertia = 0.2;
@@ -321,9 +362,7 @@ export default class Player {
     // cam.upperRadiusLimit = 430;
     // cam.lowerBetaLimit =0.75;
     // cam.upperBetaLimit =1.58 ;
-
     this.camera.thirdPersonCamera = cam;
-
     this.setCameraType(CameraType.THIRD_PERSON);
   }
 
@@ -366,10 +405,6 @@ export default class Player {
     }
   }
 
-  test() {
-
-  }
-
   fire() {
     // if (this.weapon.canHit()) {
     //   this.weapon.hit();
@@ -390,8 +425,7 @@ export default class Player {
 
   onKeyDown(event) {
     //console.log("KeyDown : " + event.keyCode);
-
-    let kb = this.game.gameMod.keyBindings;
+    let kb = this.config.keyBindings;
     switch(event.keyCode){
       case kb.jump:
         if (!this.jumping) {
@@ -401,35 +435,35 @@ export default class Player {
       case kb.forward:
         if (!this.jumping) {
           this.moveForward = true;
-          this.moving = true;
+          this.setMoving(true);
         }
         break;
       case kb.backward:
         if (!this.jumping) {
           this.moveBackward = true;
-          this.moving = true;
+          this.setMoving(true);
         }
         break;
       case kb.left:
         if (!this.jumping) {
           this.strafeLeft = true;
-          this.moving = true;
+          this.setMoving(true);
         }
         break;
       case kb.right:
         if (!this.jumping) {
           this.strafeRight = true;
-          this.moving = true;
+          this.setMoving(true);
         }
         break;
-      case 69: this.switchCameraType(); break; // E
-      case 82: this.test(); break; // R
-      //case 71: this.firstPersonCamera.applyGravity = !this.firstPersonCamera.applyGravity; break; // R
+      case kb.switchCamera:
+        this.switchCameraType();
+        break;
     }
   }
 
   onKeyUp(event) {
-    let kb = this.game.gameMod.keyBindings;
+    let kb = this.config.keyBindings;
     switch(event.keyCode){
       case kb.forward:
         this.moveForward = false;
@@ -445,7 +479,7 @@ export default class Player {
         break;
     }
     if (!this.moveForward && !this.moveBackward && !this.strafeLeft && !this.strafeRight) {
-      this.moving = false;
+      this.setMoving(false);
     }
   }
 

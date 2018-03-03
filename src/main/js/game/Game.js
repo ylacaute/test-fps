@@ -33,17 +33,32 @@ export default class Game {
 
   physicsImpostors = [];
 
-  constructor(canvas, gameMod, gameMap, scene) {
+  config = {
+    core: null,
+    player : null
+  };
+
+  constructor(canvas, gameMod, gameMap, scene, gameConfig, playerConfig) {
     this.canvas = canvas;
     this.gameMod = gameMod;
     this.gameMap = gameMap;
     this.scene = scene;
+    this.config.core = gameConfig;
+    this.config.player = playerConfig;
 
     window.addEventListener("keyup", this.onKeyUp.bind(this), false);
     document.addEventListener("pointerlockchange", this.pointerLockChange.bind(this), false);
     document.addEventListener("mspointerlockchange", this.pointerLockChange.bind(this), false);
     document.addEventListener("mozpointerlockchange", this.pointerLockChange.bind(this), false);
     document.addEventListener("webkitpointerlockchange", this.pointerLockChange.bind(this), false);
+  }
+
+  getConfig() {
+    return this.config.core;
+  }
+
+  getPlayerConfig() {
+    return this.config.player;
   }
 
   start() {

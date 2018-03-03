@@ -12,12 +12,11 @@ export default class ArenaMap {
     "ground" : "textures/ground/ground_01.jpg"
   };
 
-  meshes = {
-    "mush" : ["tmp/", "mushroomFinal.babylon", false],
-    "player" : ["characters/dude/", "dude.babylon", true],
-    "hammer" : ["weapons/hammer/", "hammer.babylon", false],
-    "gun" : ["weapons/", "PowerRifle.babylon", false]
-  };
+  // meshes = {
+  //   "mush" : ["tmp/", "mushroomFinal.babylon", false],
+  //   "hammer" : ["weapons/hammer/", "hammer.babylon", false],
+  //   "gun" : ["weapons/", "PowerRifle.babylon", false]
+  // };
 
   ground = {
     material : {

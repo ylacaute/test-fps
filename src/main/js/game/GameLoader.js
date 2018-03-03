@@ -5,22 +5,17 @@ import Game from "game/Game";
 import Player from "game/player/Player";
 import GameMenu from "game/GameMenu";
 import Helper from "game/Helper";
+import PlayerConfig from "game/player/PlayerConfig";
 
 class GameLoader {
 
-  load(canvas, modName, mapName) {
-    console.log("Loading game, mod = " + modName + ", map = " + mapName);
-    // we always load FPSMod and ArenaMap for now
-    let gameMod = new FPSMod();
-    let gameMap = new ArenaMap();
-
-    console.log("Creating scene...");
-    let scene = this.createScene(canvas, gameMod);
-    let game = new Game(canvas, gameMod, gameMap, scene);
-
-    this.loadSounds(game);
-
+  // we always load FPSMod and ArenaMap for now
+  load(canvas, gameConfig) {
+    console.log("Loading game, mod = " + gameConfig.mod + ", map = " + gameConfig.map);
+    let scene = this.createScene(canvas, gameConfig.debug);
+    let game = new Game(canvas, new FPSMod(), new ArenaMap(), scene, gameConfig, new PlayerConfig());
     let assetsManager = new BABYLON.AssetsManager(scene);
+
     assetsManager.onFinish = this.onAllAssetsLoaded.bind(this, game);
     this.loadAssets(assetsManager, game);
 
@@ -29,7 +24,7 @@ class GameLoader {
 
   onAllAssetsLoaded(game) {
     console.log("All assets loaded");
-
+    this.enablePhysics(game.scene, game.gameMod.gravity);
     this.createLights(game.scene);
     this.createSkyBox(game.scene);
     this.createGround(game);
@@ -51,29 +46,22 @@ class GameLoader {
     });
   }
 
-  createScene(canvas, mod) {
+  createScene(canvas, isDebug) {
+    console.log("Creating scene...");
     let engine = this.createEngine(canvas);
     let scene = new BABYLON.Scene(engine);
-
-    scene.enablePhysics(new BABYLON.Vector3(0,-50,0), new BABYLON.CannonJSPlugin());
-    //scene.enablePhysics();//new BABYLON.Vector3(0,-10,0), new BABYLON.OimoJSPlugin());
-    //scene.enablePhysics(new BABYLON.Vector3(0,-9.81, 0), new BABYLON.OimoJSPlugin());
-    //scene.gravity = new BABYLON.Vector3(0,-10,0);
-    //scene.collisionsEnabled = true;
-
     scene.ambientColor = new BABYLON.Color3(0.3, 0.3, 0.3);
     scene.clearColor = new BABYLON.Color3(0, 0, .2);
-
     BABYLON.Engine.ShadersRepository = "shaders/";
-
-    //scene.gravity = new BABYLON.Vector3(0, -9.81, 0);
-    //scene.collisionsEnabled = true;
-
-    if (mod.showAxis) {
+    if (isDebug) {
       Helper.showAxis(scene, 20);
     }
     console.log("Scene created successfully");
     return scene;
+  }
+
+  enablePhysics(scene, gravity) {
+    scene.enablePhysics(new BABYLON.Vector3(0, gravity, 0), new BABYLON.CannonJSPlugin());
   }
 
   createLights(scene) {
@@ -97,7 +85,6 @@ class GameLoader {
     let texture = game.textures.ground;
     let ground = BABYLON.Mesh.CreateGround('ground', 500, 500, 2, scene);
 
-    console.log("game.textures : ", game.textures);
     texture.uScale = texture.vScale = 10;
     ground.checkCollisions = true;
     ground.material = new BABYLON.StandardMaterial("groundMat", scene);
@@ -202,9 +189,6 @@ class GameLoader {
     game.physicsImpostors.push(box2.physicsImpostor);
   }
 
-
-
-
   createMenuCamera(scene) {
     let position = new BABYLON.Vector3(0, 20, 0);
     let menuCamera = new BABYLON.ArcRotateCamera("Camera", 0, Math.PI / 4, Math.PI / 4, position, scene);
@@ -212,16 +196,13 @@ class GameLoader {
 
     let menuCameraAnimation = new BABYLON.Animation("death", "alpha", 20,
       BABYLON.Animation.ANIMATIONTYPE_FLOAT, BABYLON.Animation.ANIMATIONLOOPMODE_CYCLE, true);
-    menuCameraAnimation.setKeys([
-      {
+    menuCameraAnimation.setKeys([{
         frame: 0,
         value: 0
-      },
-      {
+      }, {
         frame: 200,
         value: Math.PI * 2
-      }
-    ]);
+      }]);
     menuCamera.animations.push(menuCameraAnimation);
     return menuCamera;
   }
@@ -237,55 +218,49 @@ class GameLoader {
   }
 
   createPlayer(game) {
-    let player = new Player(game);
-
-
-    return player;
+    return new Player(game);
   }
 
   loadAssets(assetsManager, game) {
-    let map = game.gameMap;
-    let mod = game.gameMod;
+    this.loadMap(assetsManager, game, game.gameMap);
+    this.loadSkin(assetsManager, game, game.getPlayerConfig().skin);
+    console.log("Loading assets...");
+    assetsManager.load();
+  }
 
+  loadMap(assetsManager, game, map) {
     for (let imageName in map.images) {
       let task = assetsManager.addImageTask(imageName, map.images[imageName]);
       task.onSuccess = this.onImageLoaded.bind(this, game);
       task.onError = console.error;
     }
-
     for (let textureName in map.textures) {
       let task = assetsManager.addTextureTask(textureName, map.textures[textureName]);
       task.onSuccess = this.onTextureLoaded.bind(this, game);
       task.onError = console.error;
     }
-
-    for(let meshName in mod.meshes) {
-      let task = assetsManager.addMeshTask(meshName, '', mod.meshes[meshName][0], mod.meshes[meshName][1]);
-      task.onSuccess = this.onMeshLoaded.bind(this, game);
-      task.onError = console.error;
-    }
-
-    for(let meshName in map.meshes) {
-      let task = assetsManager.addMeshTask(meshName, '', map.meshes[meshName][0], map.meshes[meshName][1]);
-      task.onSuccess = this.onMeshLoaded.bind(this, game);
-      task.onError = console.error;
-    }
-
-    console.log("Loading assets...");
-      assetsManager.load();
+    // for(let meshName in meshList) {
+    //   let task = assetsManager.addMeshTask(meshName, '', mod.meshes[meshName][0], mod.meshes[meshName][1]);
+    //   task.onSuccess = this.onMeshLoaded.bind(this, game);
+    //   task.onError = console.error;
+    // }
   }
 
-  loadSounds(game) {
-    const { gameMod, scene } = game;
-    for(let soundName in gameMod.sounds) {
-      console.log("Loading sound: " + soundName);
-      game.sounds[soundName] = new BABYLON.Sound(
-        soundName,
-        gameMod.sounds[soundName].src,
-        scene,
-        null,
-        gameMod.sounds[soundName].options);
-    }
+  loadSkin(assetsManager, game, skin) {
+    console.log("Loading skin: ", skin);
+    skin.sounds.forEach((sound) => this.loadSound(game, skin.baseDir, sound));
+    this.loadMesh(assetsManager, game, skin.baseDir, skin.name, skin.model);
+  }
+
+  loadSound(game, baseDir, sound) {
+    console.log("Loading sound: " + sound.name);
+    game.sounds[sound.name] = new BABYLON.Sound(sound.name, baseDir + sound.src, game.scene, null, sound.options);
+  }
+
+  loadMesh(assetsManager, game, baseDir, meshName, babylonFile) {
+    let task = assetsManager.addMeshTask(meshName, '', baseDir, babylonFile);
+    task.onSuccess = this.onMeshLoaded.bind(this, game);
+    task.onError = console.error;
   }
 
   onImageLoaded(game, task) {
@@ -311,28 +286,11 @@ class GameLoader {
     }
     let meshes = game.meshes[task.name] = task.loadedMeshes;
     for (let i = 0; i < meshes.length; i++) {
-      meshes[i].setEnabled(game.gameMap.meshes[task.name][2]);
+      //meshes[i].setEnabled(game.gameMap.meshes[task.name][2]);
       meshes[i].showBoundingBox = game.gameMod.showBoundingBox;
     }
-
-    // if (task.name === 'player') {
-    //   console.log("CREATING PLAYER IMPOSTOR");
-    //   //meshes[0].position = new BABYLON.Vector3(20, 50, 20);
-    //   //meshes[0].scaling = new BABYLON.Vector3(0.1, 0.1, 0.1);
-    //   meshes[0].physicsImpostor = new BABYLON.PhysicsImpostor(
-    //     meshes[0],
-    //     BABYLON.PhysicsImpostor.BoxImpostor, {
-    //       mass: 10,
-    //       friction: 1,    // 0 = huge sliding, max 1
-    //       restitution: 0, // 0 = no bounce, max 1
-    //       ignoreParent: true,
-    //       disableBidirectionalTransformation: true
-    //     }, game.scene);
-    // }
-
     console.log(logMsg + ")");
   }
-
 }
 
 const GameMod = {

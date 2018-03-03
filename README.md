@@ -1,3 +1,45 @@
+
+
+
+
+
+
+
+
+
+# Blender
+
+## BabylonJS Exporter
+Specific to babylonJS
+
+## glTF Exporter
+More standard
+What is glTF : https://www.khronos.org/gltf/
+https://github.com/KhronosGroup/glTF-Blender-Exporter
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 # React + Redux + Webpack 3 Boilerplate
 
 Because it can be a complicated to configure Webpack I decided to create this boilerplate repository, which is not finished yet.

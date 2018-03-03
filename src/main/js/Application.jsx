@@ -7,6 +7,9 @@ import styleCSS from "../sass/index.scss";
 //import Game from 'Game.js';
 // Converts from degrees to radians.
 
+import GameConfig from 'game/config/GameConfig';
+
+
 Math.radians = function(degrees) {
   return degrees * Math.PI / 180;
 };
@@ -33,7 +36,7 @@ class Application extends React.Component {
 
     let canvas = document.getElementById("renderCanvas");
 
-    new GameLoader().load(canvas, GameMod.FPS, GameMap.Arena);
+    new GameLoader().load(canvas, new GameConfig());
 
     //let g = new Game(canvas);
     //var spector = new SPECTOR.Spector();
