@@ -18,6 +18,22 @@ export default class ArenaMap {
   //   "gun" : ["weapons/", "PowerRifle.babylon", false]
   // };
 
+  weapons = [{
+    name: "bazooka",
+    baseDir: "weapons/bazooka/",
+    model: "bazooka.babylon",
+    enabled: false,
+    sounds: [{
+      name: "bazookaFire",
+      src: "fire.mp3",
+      options: {
+        volume: 0.1
+      }
+    }]
+  }];
+
+  defaultWeapon = "bazooka";
+
   ground = {
     material : {
       src : "maps/arena/ground.png",

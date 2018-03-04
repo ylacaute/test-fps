@@ -224,6 +224,7 @@ class GameLoader {
   loadAssets(assetsManager, game) {
     this.loadMap(assetsManager, game, game.gameMap);
     this.loadSkin(assetsManager, game, game.getPlayerConfig().skin);
+    this.loadCrosshair(assetsManager, game, game.getPlayerConfig().crosshair);
     console.log("Loading assets...");
     assetsManager.load();
   }
@@ -239,6 +240,8 @@ class GameLoader {
       task.onSuccess = this.onTextureLoaded.bind(this, game);
       task.onError = console.error;
     }
+
+    map.weapons.forEach((weapon) => this.loadWeapon(assetsManager, game, weapon));
     // for(let meshName in meshList) {
     //   let task = assetsManager.addMeshTask(meshName, '', mod.meshes[meshName][0], mod.meshes[meshName][1]);
     //   task.onSuccess = this.onMeshLoaded.bind(this, game);
@@ -246,10 +249,26 @@ class GameLoader {
     // }
   }
 
+  loadCrosshair(assetsManager, game, crosshair) {
+    this.loadTexture(assetsManager, game, crosshair);
+  }
+
+  loadWeapon(assetsManager, game, weapon) {
+    console.log("Loading weapon: ", weapon);
+    weapon.sounds.forEach((sound) => this.loadSound(game, weapon.baseDir, sound));
+    this.loadMesh(assetsManager, game, weapon.baseDir, weapon.name, weapon.model, weapon.enabled);
+  }
+
   loadSkin(assetsManager, game, skin) {
     console.log("Loading skin: ", skin);
     skin.sounds.forEach((sound) => this.loadSound(game, skin.baseDir, sound));
-    this.loadMesh(assetsManager, game, skin.baseDir, skin.name, skin.model);
+    this.loadMesh(assetsManager, game, skin.baseDir, skin.name, skin.model, skin.enabled);
+  }
+
+  loadTexture(assetsManager, game, texture) {
+    let task = assetsManager.addTextureTask(texture.name, texture.path);
+    task.onSuccess = this.onTextureLoaded.bind(this, game);
+    task.onError = console.error;
   }
 
   loadSound(game, baseDir, sound) {
@@ -257,9 +276,9 @@ class GameLoader {
     game.sounds[sound.name] = new BABYLON.Sound(sound.name, baseDir + sound.src, game.scene, null, sound.options);
   }
 
-  loadMesh(assetsManager, game, baseDir, meshName, babylonFile) {
+  loadMesh(assetsManager, game, baseDir, meshName, babylonFile, meshEnabled) {
     let task = assetsManager.addMeshTask(meshName, '', baseDir, babylonFile);
-    task.onSuccess = this.onMeshLoaded.bind(this, game);
+    task.onSuccess = this.onMeshLoaded.bind(this, game, meshEnabled);
     task.onError = console.error;
   }
 
@@ -273,7 +292,7 @@ class GameLoader {
     console.log("Loaded task '" + task.name + "' (texture)");
   }
 
-  onMeshLoaded(game, task) {
+  onMeshLoaded(game, meshEnabled, task) {
     let logMsg = "Loaded task '" + task.name + "' (mesh";
 
     if (task.loadedParticleSystems.length > 0) {
@@ -284,9 +303,10 @@ class GameLoader {
       game.skeletons[task.name] = task.loadedSkeletons;
       logMsg += ", skeletons"
     }
+    console.log("task.loadedMeshes : ", task.loadedMeshes);
     let meshes = game.meshes[task.name] = task.loadedMeshes;
     for (let i = 0; i < meshes.length; i++) {
-      //meshes[i].setEnabled(game.gameMap.meshes[task.name][2]);
+      meshes[i].setEnabled(meshEnabled);
       meshes[i].showBoundingBox = game.gameMod.showBoundingBox;
     }
     console.log(logMsg + ")");

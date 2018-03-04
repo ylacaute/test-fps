@@ -1,0 +1,46 @@
+Exporter version: 5.5.0, Blender version: 2.78 (sub 0)
+========= Conversion from Blender to Babylon.js =========
+	Scene settings used:
+		selected layers only:  false
+		flat shading entire scene:  false
+		inline textures:  false
+		texture directory:  /home/epi/prog/babylon/testFPS/src/main/resources/weapons/bazooka/
+	Python World class constructor completed
+	processing begun of mesh:  Plane
+		WARNING: No materials have been assigned: 
+		num positions      :  504
+		num normals        :  504
+		num uvs            :  1008
+		num uvs2           :  0
+		num colors         :  0
+		num indices        :  828
+	processing begun of mesh:  Disc
+		WARNING: No materials have been assigned: 
+		num positions      :  1132
+		num normals        :  1132
+		num uvs            :  2264
+		num uvs2           :  0
+		num colors         :  0
+		num indices        :  1482
+	processing begun of mesh:  Cube.001
+		WARNING: No materials have been assigned: 
+		num positions      :  80
+		num normals        :  80
+		num uvs            :  160
+		num uvs2           :  0
+		num colors         :  0
+		num indices        :  156
+	processing begun of mesh:  Cube
+		processing begun of Standard material:  Material
+		num positions      :  8
+		num normals        :  8
+		num uvs            :  0
+		num uvs2           :  0
+		num colors         :  0
+		num indices        :  36
+	processing begun of camera (UniversalCamera):  Camera
+	processing begun of light (POINT):  Lamp
+========= Writing of scene file started =========
+========= Writing of scene file completed =========
+========= end of processing =========
+elapsed time:  0 min, 0.2015 secs

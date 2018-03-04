@@ -1,4 +1,5 @@
 import Skins from "game/config/Skins";
+import CrosshairConfig from "game/config/CrosshairConfig";
 
 export default class PlayerConfig {
 
@@ -14,5 +15,7 @@ export default class PlayerConfig {
     switchCamera: 69, // E
     reload: 82        // R
   };
+
+  crosshair = CrosshairConfig.available[0];
 
 }

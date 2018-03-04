@@ -1,5 +1,4 @@
 
-
 const GameState = {
   LOADING : 0,
   MENU : 1,
@@ -35,7 +34,8 @@ export default class Game {
 
   config = {
     core: null,
-    player : null
+    player : null,
+    crosshair : null
   };
 
   constructor(canvas, gameMod, gameMap, scene, gameConfig, playerConfig) {

@@ -1,6 +1,8 @@
 import * as BABYLON from 'babylonjs';
 
 import Hammer from "game/weapons/Hammer";
+import Bazooka from "../weapons/Bazooka";
+import Helper from "game/Helper";
 
 function vecToLocal(vector, mesh){
   var m = mesh.getWorldMatrix();
@@ -43,11 +45,11 @@ export default class Player {
   strafeRight = false;
   moving = false;
   jumping = false;
-
+  firing = false;
 
   // Better gamePlay
   jumpRequestTimestamp = 0;
-  jumpRequestMaxDelay = 100; // ms
+  jumpRequestMaxDelay = 50; // ms
 
 
   isMouseDown = false;
@@ -74,6 +76,7 @@ export default class Player {
 
   body = {
     height: 10,
+    rotation: new BABYLON.Vector3(0, 0, 0),
     container : null,
     meshes : null,
     feetRay: null
@@ -94,7 +97,18 @@ export default class Player {
     this.config = game.getPlayerConfig();
     this.createBody(game);
     this.createCameras(game);
+    this.createCrosshair(game);
+    this.createFeetRay(game);
+    this.createFireRay(game);
+    this.onPhysicEvent(PhysicEvent.REQUEST_START_WAIT);
+
+    if (game.config.core.debug) {
+      var localOrigin = Helper.createLocalAxes(game.scene, 3);
+      localOrigin.parent = this.body.container;
+    }
+
     //this.weapon = new Hammer(game, this.firstPersonCamera);
+    this.weapon = new Bazooka(game, this.body.container);
     window.addEventListener("keydown", this.onKeyDown.bind(this), false);
     window.addEventListener("keyup", this.onKeyUp.bind(this), false);
     document.addEventListener("mousedown", this.onMouseDown.bind(this), false);
@@ -117,6 +131,8 @@ export default class Player {
     }
   }
 
+  counter = 0;
+
   updateCamera() {
     let body = this.body.container;
     let cam = this.camera.current;
@@ -124,11 +140,16 @@ export default class Player {
     if (this.camera.type === CameraType.THIRD_PERSON) {
       body.rotation.y = Math.PI / 2 - cam.alpha;
     } else {
-      body.rotation.y = - Math.PI + cam.rotation.y;
-      cam.position = body.position.clone();
+      // console.log("CAMERA ROTATION: ", cam.rotation);
+      // console.log("BODY ROTATION: ", body.rotation);
+      body.rotation.y = -Math.PI + cam.rotation.y; //- Math.PI +
+      cam.position.copyFrom(body.position);
       cam.position.y += 4;
-      cam.position.z -= 4;
+      //cam.position.z -= 2;
+      //console.log("cam.rotation :", cam.rotation);
     }
+    this.body.rotation.y =  body.rotation.y;
+    this.body.rotation.x =  cam.rotation.x;
   }
 
   beforeRender() {
@@ -138,6 +159,10 @@ export default class Player {
     // TMP
     if (body.intersectsMesh(this.game.scene.getMeshByName("box2"), true)) {
       this.game.scene.getMeshByName("box2").material.diffuseColor = new BABYLON.Color3(Math.random(), Math.random(), Math.random());
+    }
+
+    if (this.firing && !this.weapon.isOnCooldown()) {
+      this.fire();
     }
 
     if (this.jumping) {
@@ -156,7 +181,8 @@ export default class Player {
         this.speed -= this.deceleration;
       }
       // Moving and apply gravity
-      body.impostor.setLinearVelocity(this.getCurrentMoveVector(body, this.gravity, this.speed));
+      let vect = this.getCurrentMoveVector(body, this.gravity, this.speed);
+      body.impostor.setLinearVelocity(vect);
     } else {
       // Just apply gravity and deceleration
       body.impostor.setLinearVelocity(new BABYLON.Vector3(0, body.impostor.getLinearVelocity().y, 0));
@@ -169,10 +195,16 @@ export default class Player {
     }
   }
 
+  getCurrentDirectionVector() {
+    let xDir = -parseFloat(Math.sin(parseFloat(this.body.currentYRotation)));
+    let zDir = -parseFloat(Math.cos(parseFloat(this.body.currentYRotation)));
+    return new BABYLON.Vector3(xDir, 0, zDir);
+  }
+
   getCurrentMoveVector(body, gravity, speed) {
     let yRotation = body.rotation.y;
     let strafeModificator = (this.moveBackward || this.moveForward) ? 4 : 2;
-    let sign = this.moveForward ? 1 : -1;
+    let sign = this.moveBackward ? -1 : 1;
     let xDir = 0;
     let zDir = 0;
 
@@ -182,9 +214,9 @@ export default class Player {
       } else if (this.strafeRight) {
         yRotation = yRotation + (Math.PI / strafeModificator) * sign;
       }
-      xDir = parseFloat(Math.sin(parseFloat(yRotation))) * speed;
-      zDir = parseFloat(Math.cos(parseFloat(yRotation))) * speed;
-      if (this.moveForward) {
+      xDir = -parseFloat(Math.sin(parseFloat(yRotation))) * speed;
+      zDir = -parseFloat(Math.cos(parseFloat(yRotation))) * speed;
+      if (this.moveBackward) {
         xDir = -xDir;
         zDir = -zDir;
       }
@@ -256,6 +288,7 @@ export default class Player {
     this.body.container.position = new BABYLON.Vector3(0, 10, 0);
     this.body.container.material = new BABYLON.StandardMaterial("mat", game.scene);
     this.body.container.material.alpha = game.config.core.debug ? 0.5 : 0;
+    this.body.container.rotation.y = Math.PI;
     this.body.meshes[0].scaling = new BABYLON.Vector3(skin.scale[0], skin.scale[1], skin.scale[2]);
     this.body.meshes[0].parent = this.body.container;
     this.body.meshes[0].rotation.x = skin.rotation[0];
@@ -279,8 +312,6 @@ export default class Player {
       body.fixedRotation = true;
       body.updateMassProperties();
     });
-    this.createFeetRay(game);
-    this.onPhysicEvent(PhysicEvent.REQUEST_START_WAIT);
   }
 
   onPhysicEvent(physicEvent) {
@@ -336,14 +367,23 @@ export default class Player {
   createFeetRay(game) {
     let startingYPostion = -this.body.height / 2 + 0.5;
     this.body.feetRay = new BABYLON.Ray();
-    let frontHelper = new BABYLON.RayHelper(this.body.feetRay);
-    let frontLocalMeshDirection = new BABYLON.Vector3(0, -1, 0);
-    let frontLocalMeshOrigin = new BABYLON.Vector3(0, startingYPostion, 0);
-    let frontLength = 2;
-    frontHelper.attachToMesh(this.body.container, frontLocalMeshDirection, frontLocalMeshOrigin, frontLength);
+    let rayHelper = new BABYLON.RayHelper(this.body.feetRay);
+    let localMeshDirection = new BABYLON.Vector3(0, -1, 0);
+    let loalMeshOrigin = new BABYLON.Vector3(0, startingYPostion, 0);
+    let rayLength = 2;
+    rayHelper.attachToMesh(this.body.container, localMeshDirection, loalMeshOrigin, rayLength);
     if (game.config.core.debug) {
-      frontHelper.show(this.game.scene, new BABYLON.Color3(1, 1, 1));
+      rayHelper.show(this.game.scene, new BABYLON.Color3(1, 1, 1));
     }
+  }
+
+  createFireRay(game) {
+    this.body.fireRay = new BABYLON.Ray();
+    let rayHelper = new BABYLON.RayHelper(this.body.fireRay);
+    let localMeshDirection = new BABYLON.Vector3(0, 0, 1);
+    let localMeshOrigin = new BABYLON.Vector3(0, 0, 0);
+    let rayLength = 100;
+    rayHelper.attachToMesh(this.camera.firstPersonCamera, localMeshDirection, localMeshOrigin, rayLength);
   }
 
   checkFeetRayCollision(main, collided) {
@@ -365,15 +405,19 @@ export default class Player {
     let target = this.body.container.position.clone();
     target.y += 1;
     cam = new BABYLON.FreeCamera("camera", BABYLON.Vector3.Zero(), game.scene);
+    cam.rotation.y = 0;
     cam.inputs.removeByType("FreeCameraKeyboardMoveInput");
-    cam.position = this.startingPosition;
+    cam.noRotationConstraint = true;
+    //cam.position = this.startingPosition;
     cam.inertia = 0.2;
     cam.angularSensibility = 1000;
     //cam.fov = 90.00 * (Math.PI / 180);
     cam.attachControl(game.canvas, true);
     this.camera.firstPersonCamera = cam;
+    //cam.parent = this.body.container;
 
-    cam = new BABYLON.ArcRotateCamera("camera", 0, 1, 20, this.body.container, game.scene);
+    cam = new BABYLON.ArcRotateCamera("camera", -Math.PI / 2, 1, 20, this.body.container, game.scene);
+    cam.rotation.y = 0;
     //cam.setPosition(new BABYLON.Vector3(4, 55, 4));
     cam.inertia = 0.2;
     cam.angularSensibility = 1000;
@@ -413,6 +457,25 @@ export default class Player {
     }
   }
 
+  createCrosshair(game) {
+    let crosshairName = this.config.crosshair.name;
+    let myPlane = BABYLON.MeshBuilder.CreatePlane("myPlane", {width: 0.07, height: 0.07}, game.scene);
+    myPlane.position.z = 2;
+    myPlane.parent = this.camera.firstPersonCamera;
+    myPlane.position.y = -0.03;
+    myPlane.material = new BABYLON.StandardMaterial('crosshairMat', game.scene);
+    myPlane.material.diffuseTexture = game.textures[crosshairName];
+    myPlane.material.diffuseTexture.hasAlpha = true;
+  }
+
+  // function CrosshairInFrontOfCamera(crosshair, camera, distanceFromCamera, crosshairType) {
+  //   crosshair.parent = camera;
+  //   // distance should be more than 0, of course
+  //   // crosshair.cellIndex = crosshairType;}
+  //   // CrossHairInFrontOfCamera(YourCrosshairVarNameHere, YourCameraVarNameHere, AnyDistanceYouLikeHere, ChooseYourCrosshairHere);
+  //   crosshair.position = camera.position.add(new BABYLON.Vector3(0, 0, distanceFromCamera));
+  // }
+
   switchCameraType() {
     switch (this.camera.type) {
       case CameraType.FIRST_PERSON:
@@ -427,12 +490,16 @@ export default class Player {
   }
 
   fire() {
-    // if (this.weapon.canHit()) {
-    //   this.weapon.hit();
-    // }
+    // TODO : get rotation up/down
+    //let dir = this.getCurrentDirectionVector();
+    let rotation = new BABYLON.Vector3(this.body.rotation.x, this.body.rotation.y, 0);
+    console.log("fire dir : ", rotation);
+
+    this.weapon.fire(this.body.container.position, rotation);
+
+
+
     //this.game.scene.beginAnimation(this.weapon, 0, 100, false, 10, null);
-
-
     // let pickedInfo = window.scene.pick(window.innerWidth * 0.5, window.innerHeight * 0.5, null, false);
     //
     // if (pickedInfo.pickedMesh && pickedInfo.pickedMesh.name) {
@@ -441,7 +508,6 @@ export default class Player {
     //   }
     //   this.config.ParticlesManager.launch("impact", pickedInfo.pickedPoint);
     // }
-
   }
 
   onKeyDown(event) {
@@ -497,11 +563,12 @@ export default class Player {
 
   onMouseDown() {
     this.isMouseDown = true;
-    this.fire();
+    this.firing = true;
   }
 
   onMouseUp() {
     this.isMouseDown = false;
+    this.firing = false;
   }
 
 }
