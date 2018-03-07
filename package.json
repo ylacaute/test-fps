@@ -29,8 +29,8 @@
     "chai"
   ],
   "dependencies": {
-    "babylonjs": "^3.1.0",
-    "babylonjs-gui": "^3.1.0",
+    "babylonjs": "latest",
+    "babylonjs-gui": "latest",
     "react": "^15.6.1",
     "react-dom": "^15.6.1",
     "shortcutjs": "^1.6.0"

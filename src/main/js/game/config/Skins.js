@@ -7,7 +7,7 @@ export default class Skins {
     name: "ely",
     baseDir: "characters/ely/",
     scale: [0.055, 0.055, 0.055],
-    rotation: [- Math.PI / 2 , Math.PI, 0], // +
+    rotation: [- Math.PI / 2 , Math.PI ,0],
     model: "ely.babylon",
     enabled: true,
     animation: {

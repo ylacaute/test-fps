@@ -108,7 +108,7 @@ export default class Player {
     }
 
     //this.weapon = new Hammer(game, this.firstPersonCamera);
-    this.weapon = new Bazooka(game, this.body.container);
+    this.weapon = new Bazooka(game, this.camera.firstPersonCamera);
     window.addEventListener("keydown", this.onKeyDown.bind(this), false);
     window.addEventListener("keyup", this.onKeyUp.bind(this), false);
     document.addEventListener("mousedown", this.onMouseDown.bind(this), false);
@@ -131,25 +131,17 @@ export default class Player {
     }
   }
 
-  counter = 0;
-
   updateCamera() {
     let body = this.body.container;
     let cam = this.camera.current;
 
     if (this.camera.type === CameraType.THIRD_PERSON) {
-      body.rotation.y = Math.PI / 2 - cam.alpha;
+      body.rotation.y = -Math.PI / 2 - cam.alpha;
     } else {
-      // console.log("CAMERA ROTATION: ", cam.rotation);
-      // console.log("BODY ROTATION: ", body.rotation);
-      body.rotation.y = -Math.PI + cam.rotation.y; //- Math.PI +
+      body.rotation.y = cam.rotation.y;
       cam.position.copyFrom(body.position);
       cam.position.y += 4;
-      //cam.position.z -= 2;
-      //console.log("cam.rotation :", cam.rotation);
     }
-    this.body.rotation.y =  body.rotation.y;
-    this.body.rotation.x =  cam.rotation.x;
   }
 
   beforeRender() {
@@ -214,8 +206,8 @@ export default class Player {
       } else if (this.strafeRight) {
         yRotation = yRotation + (Math.PI / strafeModificator) * sign;
       }
-      xDir = -parseFloat(Math.sin(parseFloat(yRotation))) * speed;
-      zDir = -parseFloat(Math.cos(parseFloat(yRotation))) * speed;
+      xDir = parseFloat(Math.sin(parseFloat(yRotation))) * speed;
+      zDir = parseFloat(Math.cos(parseFloat(yRotation))) * speed;
       if (this.moveBackward) {
         xDir = -xDir;
         zDir = -zDir;
@@ -288,7 +280,7 @@ export default class Player {
     this.body.container.position = new BABYLON.Vector3(0, 10, 0);
     this.body.container.material = new BABYLON.StandardMaterial("mat", game.scene);
     this.body.container.material.alpha = game.config.core.debug ? 0.5 : 0;
-    this.body.container.rotation.y = Math.PI;
+    // this.body.container.rotation.y = Math.PI;
     this.body.meshes[0].scaling = new BABYLON.Vector3(skin.scale[0], skin.scale[1], skin.scale[2]);
     this.body.meshes[0].parent = this.body.container;
     this.body.meshes[0].rotation.x = skin.rotation[0];
@@ -405,7 +397,6 @@ export default class Player {
     let target = this.body.container.position.clone();
     target.y += 1;
     cam = new BABYLON.FreeCamera("camera", BABYLON.Vector3.Zero(), game.scene);
-    cam.rotation.y = 0;
     cam.inputs.removeByType("FreeCameraKeyboardMoveInput");
     cam.noRotationConstraint = true;
     //cam.position = this.startingPosition;
@@ -417,8 +408,6 @@ export default class Player {
     //cam.parent = this.body.container;
 
     cam = new BABYLON.ArcRotateCamera("camera", -Math.PI / 2, 1, 20, this.body.container, game.scene);
-    cam.rotation.y = 0;
-    //cam.setPosition(new BABYLON.Vector3(4, 55, 4));
     cam.inertia = 0.2;
     cam.angularSensibility = 1000;
     cam.attachControl(game.canvas, true);
@@ -462,19 +451,11 @@ export default class Player {
     let myPlane = BABYLON.MeshBuilder.CreatePlane("myPlane", {width: 0.07, height: 0.07}, game.scene);
     myPlane.position.z = 2;
     myPlane.parent = this.camera.firstPersonCamera;
-    myPlane.position.y = -0.03;
+    //myPlane.position.y = -0.03;
     myPlane.material = new BABYLON.StandardMaterial('crosshairMat', game.scene);
     myPlane.material.diffuseTexture = game.textures[crosshairName];
     myPlane.material.diffuseTexture.hasAlpha = true;
   }
-
-  // function CrosshairInFrontOfCamera(crosshair, camera, distanceFromCamera, crosshairType) {
-  //   crosshair.parent = camera;
-  //   // distance should be more than 0, of course
-  //   // crosshair.cellIndex = crosshairType;}
-  //   // CrossHairInFrontOfCamera(YourCrosshairVarNameHere, YourCameraVarNameHere, AnyDistanceYouLikeHere, ChooseYourCrosshairHere);
-  //   crosshair.position = camera.position.add(new BABYLON.Vector3(0, 0, distanceFromCamera));
-  // }
 
   switchCameraType() {
     switch (this.camera.type) {
@@ -490,24 +471,10 @@ export default class Player {
   }
 
   fire() {
-    // TODO : get rotation up/down
-    //let dir = this.getCurrentDirectionVector();
-    let rotation = new BABYLON.Vector3(this.body.rotation.x, this.body.rotation.y, 0);
-    console.log("fire dir : ", rotation);
-
-    this.weapon.fire(this.body.container.position, rotation);
-
-
-
-    //this.game.scene.beginAnimation(this.weapon, 0, 100, false, 10, null);
-    // let pickedInfo = window.scene.pick(window.innerWidth * 0.5, window.innerHeight * 0.5, null, false);
-    //
-    // if (pickedInfo.pickedMesh && pickedInfo.pickedMesh.name) {
-    //   if (pickedInfo.pickedMesh.name.indexOf("enemy") != -1) {
-    //     this.config.AIManager.hurtAI(pickedInfo.pickedMesh.name, this.shotDammage);
-    //   }
-    //   this.config.ParticlesManager.launch("impact", pickedInfo.pickedPoint);
-    // }
+    console.log("FIRE - body rotation :", this.camera.current.rotation);
+    // this.weapon.fire(this.camera.firstPersonCamera.position,
+    //   new BABYLON.Vector3(this.body.rotation.x, this.body.rotation.y, 0));
+    this.weapon.fire(this.camera.firstPersonCamera.position, this.camera.current.rotation);
   }
 
   onKeyDown(event) {

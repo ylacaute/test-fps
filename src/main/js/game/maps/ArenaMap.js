@@ -9,7 +9,10 @@ export default class ArenaMap {
   textures = {
     "sand" : "textures/ground_sand.png",
     "metal" : "textures/metal.jpg",
-    "ground" : "textures/ground/ground_01.jpg"
+    "ground" : "textures/ground/ground_01.jpg",
+    "smoke" : "weapons/bazooka/smoke.png",
+    "fire" : "weapons/bazooka/fire.png",
+    "rocket" : "weapons/bazooka/rocket.jpg"
   };
 
   // meshes = {
@@ -26,6 +29,12 @@ export default class ArenaMap {
     sounds: [{
       name: "bazookaFire",
       src: "fire.mp3",
+      options: {
+        volume: 0.1
+      }
+    }, {
+      name: "bazookaHit",
+      src: "hit.mp3",
       options: {
         volume: 0.1
       }

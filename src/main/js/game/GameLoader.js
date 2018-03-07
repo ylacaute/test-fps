@@ -187,6 +187,104 @@ class GameLoader {
     game.physicsImpostors.push(sphere.physicsImpostor);
     game.physicsImpostors.push(box.physicsImpostor);
     game.physicsImpostors.push(box2.physicsImpostor);
+
+    this.createParticules(game);
+  }
+
+  createParticules(game) {
+    let scene = game.scene;
+
+    // BOX
+    let box = new BABYLON.MeshBuilder.CreateBox("box1", {
+      size: 5
+    }, scene);
+    box.material = new BABYLON.StandardMaterial("redMat", scene);
+    box.material.ambientColor = new BABYLON.Color3(1, 0, 0);
+    box.rotation.x = -0.2;
+    box.rotation.y = -0.4;
+    box.position= new BABYLON.Vector3(10, 0, 50);
+
+
+
+
+    //Whispy Smoke
+    // var smokeParticlesB = new BABYLON.ParticleSystem("particles", 1000, scene);
+    // smokeParticlesB.particleTexture = game.textures.fire;
+    // smokeParticlesB.emitter = box; // the starting object, the emitter
+    // smokeParticlesB.minEmitBox = new BABYLON.Vector3(-0.25, 1, -0.25); // Starting all from
+    // smokeParticlesB.maxEmitBox = new BABYLON.Vector3(0.25, 1, 0.25); // To...
+    //
+    // smokeParticlesB.color1 = new BABYLON.Color4(0.1, 0.1, 0.1, 0.5);
+    // smokeParticlesB.color2 = new BABYLON.Color4(0.2, 0.2, 0.2, 0.5);
+    // smokeParticlesB.colorDead = new BABYLON.Color4(0, 0, 0, 0.0);
+    //
+    // smokeParticlesB.minSize = 1.5;
+    // smokeParticlesB.maxSize = 3;
+    //
+    // smokeParticlesB.minLifeTime = 0.3;
+    // smokeParticlesB.maxLifeTime = 1.5;
+    //
+    // smokeParticlesB.emitRate = 125;
+    //
+    // // Blend mode : BLENDMODE_ONEONE, or BLENDMODE_STANDARD
+    // smokeParticlesB.blendMode = BABYLON.ParticleSystem.BLENDMODE_STANDARD;
+    //
+    // smokeParticlesB.gravity = new BABYLON.Vector3(0, 0, 0);
+    //
+    // smokeParticlesB.direction1 = new BABYLON.Vector3(-1.5, 8, -1.5);
+    // smokeParticlesB.direction2 = new BABYLON.Vector3(1.5, 8, 1.5);
+    //
+    // smokeParticlesB.minEmitPower = 0.5;
+    // smokeParticlesB.maxEmitPower = 1.5;
+    // smokeParticlesB.updateSpeed = 0.005;
+    //
+    // smokeParticlesB.start();
+
+
+    let box2 = new BABYLON.MeshBuilder.CreateBox("box2", {
+      size: 5
+    }, scene);
+    box2.material = new BABYLON.StandardMaterial("redMat", scene);
+    box2.material.ambientColor = new BABYLON.Color3(1, 0, 0);
+    box2.rotation.x = -0.2;
+    box2.rotation.y = -0.4;
+    box2.position= new BABYLON.Vector3(25, 0, 25);
+
+    //Boiling Smoke
+    var smokeParticlesA = new BABYLON.ParticleSystem("particles", 1000, scene);
+    smokeParticlesA.particleTexture = game.textures.smoke;
+    smokeParticlesA.emitter = box2; // the starting object, the emitter
+    smokeParticlesA.minEmitBox = new BABYLON.Vector3(-0.5, 1, -0.5); // Starting all from
+    smokeParticlesA.maxEmitBox = new BABYLON.Vector3(0.5, 1, 0.5); // To...
+
+    smokeParticlesA.color1 = new BABYLON.Color4(0.05, 0.05, 0.05, 0.75);
+    smokeParticlesA.color2 = new BABYLON.Color4(0.15, 0.15, 0.15, 0.75);
+    smokeParticlesA.colorDead = new BABYLON.Color4(0, 0, 0, 0.0);
+
+    smokeParticlesA.minSize = 1.0;
+    smokeParticlesA.maxSize = 2.0;
+
+    smokeParticlesA.minLifeTime = 0.3;
+    smokeParticlesA.maxLifeTime = 0.8;
+
+    smokeParticlesA.emitRate = 125;
+
+    // Blend mode : BLENDMODE_ONEONE, or BLENDMODE_STANDARD
+    smokeParticlesA.blendMode = BABYLON.ParticleSystem.BLENDMODE_STANDARD;
+
+    smokeParticlesA.gravity = new BABYLON.Vector3(0, 0, 0);
+
+    smokeParticlesA.direction1 = new BABYLON.Vector3(-1.5, 8, -1.5);
+    smokeParticlesA.direction2 = new BABYLON.Vector3(1.5, 8, 1.5);
+
+    smokeParticlesA.minAngularSpeed = -10.0;
+    smokeParticlesA.maxAngularSpeed = 10.0;
+
+    smokeParticlesA.minEmitPower = 0.5;
+    smokeParticlesA.maxEmitPower = 1.5;
+    smokeParticlesA.updateSpeed = 0.005;
+
+    smokeParticlesA.start();
   }
 
   createMenuCamera(scene) {
