@@ -272,10 +272,15 @@ export default class Player {
     let skin = this.config.skin;
     this.body.meshes = game.meshes[skin.name];
     this.body.skeletons = game.skeletons[skin.name];
-    this.body.container = new BABYLON.MeshBuilder.CreateBox("box", {
-      height: this.body.height,
-      width: 3,
-      depth: 2,
+    // this.body.container = new BABYLON.MeshBuilder.CreateBox("box", {
+    //   height: this.body.height,
+    //   width: 3,
+    //   depth: 2,
+    // }, game.scene);
+    this.body.container = new BABYLON.MeshBuilder.CreateSphere("box", {
+      diameterX: 4,
+      diameterY: this.body.height,
+      diameterZ: 4,
     }, game.scene);
     this.body.container.position = new BABYLON.Vector3(0, 10, 0);
     this.body.container.material = new BABYLON.StandardMaterial("mat", game.scene);
@@ -289,7 +294,7 @@ export default class Player {
     this.body.meshes[0].position.y = this.body.height / 2;
     this.body.meshes[0].position.y = -this.body.height / 2;
     this.body.container.impostor = new BABYLON.PhysicsImpostor(this.body.container,
-      BABYLON.PhysicsImpostor.BoxImpostor, {
+      BABYLON.PhysicsImpostor.SphereImpostor, {
         mass: 100,
         friction: 0,
         restitution: 0,
